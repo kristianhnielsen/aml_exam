@@ -65,3 +65,11 @@ behavioral, and usage features.
 - What model is best for deployment?
 - Which features contribute most to churn?
 - How could performance be improved?
+
+# MLFlow
+
+Start the MLFlow UI server:
+
+```bash
+uvx mlflow ui
+```
