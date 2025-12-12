@@ -5,7 +5,7 @@ import mlflow
 class ExperimentTracker:
     def __init__(self, experiment_name):
         mlflow.set_tracking_uri("sqlite:///mlflow.db")
-        mlflow.autolog(log_input_examples=True)
+        mlflow.autolog(log_input_examples=True, silent=True)
         self.experiment_name = experiment_name
         mlflow.set_experiment(self.experiment_name)
 
