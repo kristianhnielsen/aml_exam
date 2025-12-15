@@ -10,6 +10,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "mlflow>=3.7.0",
     "numpy>=2.3.5",
+    "openai>=2.11.0",
     "pandas>=2.3.3",
     "polars>=1.36.1",
     "scikit-learn>=1.8.0",

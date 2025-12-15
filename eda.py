@@ -10,11 +10,10 @@ def _():
     import matplotlib.pyplot as plt
     from data.data import load_data
     import seaborn as sns
-    import pprint as pp
     return load_data, mo, plt, sns
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # Todo:
@@ -34,14 +33,50 @@ def _(load_data):
 
 
 @app.cell
-def _(df):
-    df.head()
+def _(df, pd):
+    _col = 'TotalCharges'
+
+    if _col in df.columns:
+        print(f"Column '{_col}' found. Current dtype: {df[_col].dtype}")
+        total_count = len(df)
+        before_na = df[_col].isna().sum()
+        # attempt conversion
+        converted = pd.to_numeric(df[_col], errors='coerce')
+        after_na = converted.isna().sum()
+        coerced = after_na - before_na
+        non_null_before = total_count - before_na
+        non_null_after = total_count - after_na
+
+        print(f"Total rows: {total_count}")
+        print(f"Non-null before conversion: {non_null_before}")
+        print(f"Non-null after conversion:  {non_null_after}")
+        print(f"Values coerced to NaN during conversion: {coerced} ({coerced/total_count*100:.2f}%)")
+
+        if coerced > 0:
+            print("\nExamples of values that could not be converted (first 20):")
+            failed_examples = df.loc[converted.isna() & df[_col].notna(), _col].head(20)
+            print(failed_examples.to_string(index=True))
+
+        # Assign converted series back to the dataframe (in-place change)
+        df[_col] = converted
+
+        print(f"\nAfter casting, dtype: {df[_col].dtype}")
+        print("\nSummary statistics for the converted column:")
+        print(df[_col].describe())
+    else:
+        print(f"Column '{_col}' not found. Available columns: {df.columns.tolist()}")
     return
 
 
 @app.cell
 def _(df):
     df.isnull().sum()
+    return
+
+
+@app.cell
+def _(df):
+    df.head(50)
     return
 
 
