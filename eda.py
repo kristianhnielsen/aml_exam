@@ -76,7 +76,8 @@ def _(df):
 
 @app.cell
 def _(df):
-    df.head(50)
+    # Display rows with missing data in TotalCharges
+    df[df['TotalCharges'].isna()]
     return
 
 
