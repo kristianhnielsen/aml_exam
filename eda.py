@@ -10,7 +10,8 @@ def _():
     import matplotlib.pyplot as plt
     from data.data import load_data
     import seaborn as sns
-    return load_data, mo, plt, sns
+    import pandas as pd
+    return load_data, mo, pd, plt, sns
 
 
 @app.cell(hide_code=True)
@@ -104,9 +105,9 @@ def _(df, plt):
     fig, axes = plt.subplots(len(numerical_features)//3 + 1, 3, figsize=(15, len(numerical_features)*2))
     axes = axes.flatten()
 
-    for idx, col in enumerate(numerical_features):
-        axes[idx].boxplot(df[col].dropna())
-        axes[idx].set_title(f'{col}\nSkewness: {df[col].skew():.2f}')
+    for idx, dist_col in enumerate(numerical_features):
+        axes[idx].boxplot(df[dist_col].dropna())
+        axes[idx].set_title(f'{dist_col}\nSkewness: {df[dist_col].skew():.2f}')
         axes[idx].set_ylabel('Values')
 
     # Remove empty subplots
@@ -115,13 +116,13 @@ def _(df, plt):
 
     plt.tight_layout()
     plt.show()
-    return (col,)
+    return (numerical_features,)
 
 
 @app.cell
 def _(df, plt, sns):
     # Calculate correlation matrix for numerical features
-    correlation_matrix = df.select_dtypes(include=['float64', 'int64']).corr()
+    correlation_matrix = df.select_dtypes(include=['float64', 'int64']).drop('SeniorCitizen', axis=1).corr()
 
     # Visualize correlations using a heatmap
 
@@ -135,21 +136,16 @@ def _(df, plt, sns):
 
 
 @app.cell
-def _(col, df):
-    # Explore categorical feature cardinality
-    print("="*50)
-    print("Categorical Feature Cardinality:")
-    print("="*50)
-
+def _(df):
     categorical_features = df.select_dtypes(include=['object', 'category']).columns
-
-    for column in categorical_features:
-        unique_count = df[col].nunique()
-        print(f"\n{column}:")
-        print(f"  Unique values: {unique_count}")
-        print(f"  Value counts:\n{df[col].value_counts()}")
-        print(f"  Percentage distribution:\n{df[col].value_counts(normalize=True) * 100}")
-    return
+    print("\n" + "="*50)
+    print("Categorical Features Analysis:")
+    print("="*50)
+    for cat_col in categorical_features:
+        print(f"\nAnalyzing Categorical Feature: {cat_col}")
+        value_counts = df[cat_col].value_counts(dropna=False)
+        print(value_counts)
+    return (categorical_features,)
 
 
 @app.cell
@@ -195,6 +191,52 @@ def _(df, plt):
         plt.show()
     else:
         print(f"Column '{churn_col}' not found. Available columns: {df.columns.tolist()}")
+    return (churn_col,)
+
+
+@app.cell
+def _(churn_col, df, numerical_features, plt, sns):
+    # Visualize Numerical Features vs Churn
+    for num_churn_col in numerical_features:
+        plt.figure(figsize=(8, 4))
+        sns.boxplot(x=churn_col, y=num_churn_col, data=df)
+        plt.title(f'{num_churn_col} distribution by {churn_col}')
+        plt.show()
+    return
+
+
+@app.cell
+def _(categorical_features, churn_col, df, plt, sns):
+    # Visualize Categorical Features vs Churn
+    for col in categorical_features.drop('customerID'):
+        if col != churn_col:
+            plt.figure(figsize=(10, 5))
+            sns.countplot(x=col, hue=churn_col, data=df)
+            plt.title(f'{col} distribution by {churn_col}')
+            plt.xticks(rotation=45)
+            plt.legend(title=churn_col, loc='upper right')
+            plt.tight_layout()
+            plt.show()
+    return
+
+
+@app.cell
+def _(df):
+    print(f"Duplicate rows: {df.duplicated().sum()}")
+    return
+
+
+@app.cell
+def _(df, plt):
+    # Sanity Check: TotalCharges vs (Tenure * MonthlyCharges)
+    # Note: Might not be exact due to price changes over time, but should be linear.
+    plt.figure(figsize=(8, 6))
+    plt.scatter(df['tenure'] * df['MonthlyCharges'], df['TotalCharges'], alpha=0.5)
+    plt.xlabel('Calculated (Tenure * MonthlyCharges)')
+    plt.ylabel('Actual TotalCharges')
+    plt.title('Sanity Check: TotalCharges Logic')
+    plt.plot([0, df['TotalCharges'].max()], [0, df['TotalCharges'].max()], 'r--') # Identity line
+    plt.show()
     return
 
 
