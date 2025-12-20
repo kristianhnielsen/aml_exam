@@ -7,7 +7,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
 
-def preprocessor():
+def preprocessor(
+    test_size: float = 0.2,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     df = load_data()
 
     # remove TotalCharges empty strings
@@ -18,7 +20,7 @@ def preprocessor():
     y = df.iloc[:, -1]
 
     # split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
 
     # create 2 pipelines for categorical and numrical data
     # perform scaling and one hot encoding
