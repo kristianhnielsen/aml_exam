@@ -720,11 +720,18 @@ def _(
         _X, _y, test_size=0.2, random_state=42, stratify=_y
     )
 
-    le_log_reg = LogisticRegression(max_iter=10_000).fit(_X_train, _y_train)
+    le_log_reg = LogisticRegression(max_iter=10_000, class_weight="balanced").fit(
+        _X_train, _y_train
+    )
     le_preds = le_log_reg.predict(_X_test)
     le_accuracy = accuracy_score(_y_test, le_preds)
     print(f"Accuracy: {le_accuracy}")
     print(classification_report(_y_test, le_preds))
+    return
+
+
+@app.cell
+def _():
     return
 
 
@@ -734,6 +741,8 @@ def _(mo):
     # SMOTE
 
     Hypothesis: Since the data is imbalanced (churn = 26.6%), applying SMOTE and other oversampling techniques should improve accuracy.
+
+    Results: SMOTE does little to no improvement to accuracy. 26.6% is not a great enough imbalance to get greatly improved results.
     """)
     return
 
@@ -741,14 +750,18 @@ def _(mo):
 @app.cell(hide_code=True)
 def _():
     import imblearn
+    from collections import Counter
+
+    from imblearn.over_sampling import SMOTE
     from imblearn.combine import SMOTEENN
-    return (SMOTEENN,)
+    return Counter, SMOTE
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
+    Counter,
     LogisticRegression,
-    SMOTEENN,
+    SMOTE,
     accuracy_score,
     label_encoded_data,
     np,
@@ -760,19 +773,27 @@ def _(
     results = []
 
     for _ in range(10):
-        smote = SMOTEENN()
-        _X_resampled, _y_resampled = smote.fit_resample(_X, _y)
-    
         _X_train, _X_test, _y_train, _y_test = train_test_split(
-            _X_resampled, _y_resampled, test_size=0.2
+            _X, _y, test_size=0.2, stratify=_y
         )
-    
-        smote_le_log_reg = LogisticRegression(max_iter=10_000).fit(_X_train, _y_train)
+        _smote = SMOTE()
+        _X_resampled_train, _y_resampled_train = _smote.fit_resample(
+            _X_train, _y_train
+        )
+
+        smote_le_log_reg = LogisticRegression(
+            max_iter=10_000, class_weight="balanced"
+        ).fit(_X_resampled_train, _y_resampled_train)
+
         smote_le_preds = smote_le_log_reg.predict(_X_test)
         smote_le_accuracy = accuracy_score(_y_test, smote_le_preds)
         results.append(smote_le_accuracy)
+    print(Counter(_y).values())
+    print(Counter(_y_resampled_train).values())
 
-    print(f"Highest accuracy: {max(results)} \nAverage accuracy: {np.mean(results)}")
+    print(
+        f"Highest accuracy: {max(results)} \nAverage accuracy: {np.mean(results)}"
+    )
     return
 
 
