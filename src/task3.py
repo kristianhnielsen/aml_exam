@@ -38,7 +38,6 @@ def _(preprocessor):
     # Load and preprocess data
     X_train, X_test, y_train, y_test = preprocessor()
     input_dim = X_train.shape[1]
-
     return X_test, X_train, input_dim, y_test, y_train
 
 
@@ -128,7 +127,6 @@ def _(
         test_loss, test_accuracy = ffnn_model.evaluate(X_test, y_test)
         mlflow.log_metrics({"test_loss": test_loss, "test_accuracy": test_accuracy})
         print(f"Test Loss: {test_loss}, Test Accuracy: {test_accuracy}")
-
     return
 
 

@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.18.4"
-app = marimo.App()
+app = marimo.App(width="medium")
 
 
 @app.cell
@@ -20,6 +20,7 @@ def _():
         LogisticRegression,
         RandomForestClassifier,
         RandomizedSearchCV,
+        StackingClassifier,
         VotingClassifier,
         XGBClassifier,
         accuracy_score,
@@ -39,7 +40,6 @@ def _(preprocessor):
 @app.cell
 def _(ExperimentTracker):
     mlflow = ExperimentTracker(experiment_name="AML Task 2")
-
     return (mlflow,)
 
 
@@ -69,17 +69,17 @@ def _(
         lr_random.fit(X_train, y_train)
         best_lr = lr_random.best_estimator_
         y_pred_lr = best_lr.predict(X_test)
-    
+
         accuracy_lr = accuracy_score(y_test, y_pred_lr)
         roc_auc_lr = roc_auc_score(y_test, best_lr.predict_proba(X_test)[:, 1])
         report_lr = classification_report(y_test, y_pred_lr)
-    
+
         mlflow.log_params(lr_random.best_params_)
         mlflow.log_metrics({
             "test_accuracy": accuracy_lr,
             "test_roc_auc": roc_auc_lr
         })
-    
+
         print(f"Test Accuracy: {accuracy_lr}")
         print(f"Test ROC AUC: {roc_auc_lr}")
         print(report_lr)
@@ -248,16 +248,16 @@ def _(
 
         voting_clf.fit(X_train, y_train)
         y_pred_voting = voting_clf.predict(X_test)
-    
+
         accuracy_voting = accuracy_score(y_test, y_pred_voting)
         roc_auc_voting = roc_auc_score(y_test, voting_clf.predict_proba(X_test)[:, 1])
         report_voting = classification_report(y_test, y_pred_voting)
-    
+
         mlflow.log_metrics({
             "test_accuracy": accuracy_voting,
             "test_roc_auc": roc_auc_voting
         })
-    
+
         print(f"Test Accuracy: {accuracy_voting}")
         print(f"Test ROC AUC: {roc_auc_voting}")
         print(report_voting)
@@ -266,6 +266,7 @@ def _(
 
 @app.cell
 def _(
+    StackingClassifier,
     X_test,
     X_train,
     accuracy_score,
@@ -279,9 +280,6 @@ def _(
     y_test,
     y_train,
 ):
-    from sklearn.ensemble import StackingClassifier
-    from sklearn.linear_model import LogisticRegression
-
 
     stacking_clf = StackingClassifier(
         estimators=[
@@ -290,7 +288,6 @@ def _(
             ('xgb', best_xgb),
             ('lr', best_lr)
         ],
-        final_estimator=LogisticRegression(),
         cv=5,
         n_jobs=-1
     )
@@ -298,20 +295,20 @@ def _(
     with mlflow.start_run(run_name="Stacking Classifier"):
         stacking_clf.fit(X_train, y_train)
         y_pred_stacking = stacking_clf.predict(X_test)
-    
+
         accuracy_stacking = accuracy_score(y_test, y_pred_stacking)
         roc_auc_stacking = roc_auc_score(y_test, stacking_clf.predict_proba(X_test)[:, 1])
         report_stacking = classification_report(y_test, y_pred_stacking)
-    
+
         mlflow.log_metrics({
             "test_accuracy": accuracy_stacking,
             "test_roc_auc": roc_auc_stacking
         })
-    
+
         print(f"Test Accuracy: {accuracy_stacking}")
         print(f"Test ROC AUC: {roc_auc_stacking}")
         print(report_stacking)
-    return (LogisticRegression,)
+    return
 
 
 if __name__ == "__main__":
