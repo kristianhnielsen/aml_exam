@@ -51,8 +51,12 @@ def _():
         roc_auc_score,
         accuracy_score,
         RocCurveDisplay,
+        silhouette_score,
     )
+
+    from sklearn.cluster import KMeans
     return (
+        KMeans,
         LabelEncoder,
         LogisticRegression,
         OneHotEncoder,
@@ -66,6 +70,7 @@ def _():
         np,
         pd,
         plt,
+        silhouette_score,
         sns,
         train_test_split,
     )
@@ -570,6 +575,343 @@ def _(PCA, StandardScaler, alt, encoded_data, mo, np, pca_select_col, pd):
 @app.cell(column=5, hide_code=True)
 def _(mo):
     mo.md(r"""
+    # Clustering
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(data):
+    segments_clusters = {
+        "senior single": (data["seniorcitizen"] == 1)
+        & (data["partner"] == "No")
+        & (data["dependents"] == "No"),
+        "senior couple": (data["seniorcitizen"] == 1)
+        & (data["partner"] == "Yes")
+        & (data["dependents"] == "No"),
+        "senior single parent": (data["seniorcitizen"] == 1)
+        & (data["partner"] == "No")
+        & (data["dependents"] == "Yes"),
+        "senior with family": (data["seniorcitizen"] == 1)
+        & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
+        "non-senior single": (data["seniorcitizen"] == 0)
+        & (data["partner"] == "No")
+        & (data["dependents"] == "No"),
+        "non-senior couple": (data["seniorcitizen"] == 0)
+        & (data["partner"] == "Yes")
+        & (data["dependents"] == "No"),
+        "non-senior single parent": (data["seniorcitizen"] == 0)
+        & (data["partner"] == "No")
+        & (data["dependents"] == "Yes"),
+        "non-senior with family": (data["seniorcitizen"] == 0)
+        & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
+    }
+    clustering_data = data.copy()
+    for segment, condition in segments_clusters.items():
+        clustering_data.loc[condition, "customer_segment"] = segment
+    # clustering_data["totalcharges_log"] = np.log1p(clustering_data["totalcharges"])
+    # clustering_data["monthlycharges_log"] = np.log1p(
+    #     clustering_data["monthlycharges"]
+    # )
+    # clustering_data["tenure_log"] = np.log1p(clustering_data["tenure"])
+    clustering_data
+    return (clustering_data,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    tenure_bin_slider = mo.ui.slider(1, 12, value=4, show_value=True)
+    mo.md(f"Number of bins: {tenure_bin_slider}")
+    return (tenure_bin_slider,)
+
+
+@app.cell(hide_code=True)
+def _(alt, clustering_data, tenure_bin_slider):
+    _chart = (
+        alt.Chart(clustering_data)
+        .mark_point()
+        .encode(
+            x=alt.X(field="totalcharges", type="quantitative", bin=True),
+            y=alt.Y(
+                field="tenure",
+                type="quantitative",
+                bin={"step": tenure_bin_slider.value},
+            ),
+            color=alt.Color(field="churn", type="nominal"),
+            tooltip=[
+                alt.Tooltip(field="totalcharges", format=",.2f", bin=True),
+                alt.Tooltip(
+                    field="tenure",
+                    format=",.0f",
+                    bin={"step": tenure_bin_slider.value},
+                ),
+                alt.Tooltip(field="churn"),
+            ],
+        )
+        .properties(height=290, width="container", config={"axis": {"grid": True}})
+        .interactive()
+    )
+
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, clustering_data):
+    _chart = (
+        alt.Chart(clustering_data)
+        .mark_arc()
+        .encode(
+            color=alt.Color(field="customer_segment", type="nominal"),
+            theta=alt.Theta(field="churn", type="nominal", aggregate="count"),
+            tooltip=[
+                alt.Tooltip(field="churn", aggregate="count"),
+                alt.Tooltip(field="churn", aggregate="count"),
+                alt.Tooltip(field="customer_segment"),
+            ],
+        )
+        .properties(
+            title="Proportion of segmentation",
+        )
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, clustering_data):
+    _chart = (
+        alt.Chart(clustering_data)
+        .mark_arc()
+        .encode(
+            color=alt.Color(field="customer_segment", type="nominal"),
+            theta=alt.Theta(field="churn", type="nominal"),
+            tooltip=[
+                alt.Tooltip(field="churn"),
+                alt.Tooltip(field="churn"),
+                alt.Tooltip(field="customer_segment"),
+            ],
+        )
+        .properties(
+            title="Proportion of churn based on segmentation",
+        )
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Kmeans
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(LabelEncoder, StandardScaler, clustering_data):
+    _kmeans_scaler = StandardScaler()
+    _kmeans_le = LabelEncoder()
+    kmeans_data = clustering_data.copy()
+
+    _num_cols = kmeans_data.select_dtypes(include=["float64", 'int64']).columns.to_list()
+    kmeans_data[_num_cols] = _kmeans_scaler.fit_transform(kmeans_data[_num_cols])
+    
+    for _col in kmeans_data.select_dtypes(include=["object"]).columns.to_list():
+        kmeans_data[_col] = _kmeans_le.fit_transform(kmeans_data[_col])
+    kmeans_data
+    return (kmeans_data,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Elbow Method & Silhouette Scores for KMeans
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(kmeans_data, mo):
+    n_clusters_slider = mo.ui.slider(2, 10, value=4, show_value=True)
+    kmeans_column_select = mo.ui.multiselect(
+        options=kmeans_data.columns.tolist(),
+        label="Select KMeans Columns:",
+        value=kmeans_data.columns.tolist(),
+    )
+    mo.vstack(
+        [
+            mo.md(f"Number of clusters: {n_clusters_slider}"),
+            mo.md(f"{kmeans_column_select}"),
+        ]
+    )
+    return kmeans_column_select, n_clusters_slider
+
+
+@app.cell(hide_code=True)
+def _(KMeans, kmeans_column_select, kmeans_data, pd, silhouette_score):
+    _results = {}
+    _data = kmeans_data.copy()
+    _X = _data[
+        kmeans_column_select.value
+        if kmeans_column_select.value != []
+        else _data.columns.tolist()
+    ]
+    for _k in range(2, 13):
+        _kmeans = KMeans(n_clusters=_k, random_state=42)
+        _kmeans.fit(_X)
+        _results[_k] = {}
+        _results[_k]["sil"] = silhouette_score(_X, _kmeans.labels_)
+        _results[_k]["inert"] = _kmeans.inertia_
+    kmeans_results_df = (
+        pd.DataFrame(_results)
+        .T.reset_index()
+        .rename(
+            columns={
+                "index": "n_clusters",
+                "sil": "silhouette_score",
+                "inert": "inertia",
+            }
+        )
+    )
+    return (kmeans_results_df,)
+
+
+@app.cell(hide_code=True)
+def _(alt, kmeans_results_df):
+    _chart = (
+        alt.Chart(kmeans_results_df)
+        .mark_line()
+        .encode(
+            x=alt.X(field='n_clusters', type='quantitative'),
+            y=alt.Y(field='inertia', type='quantitative'),
+            tooltip=[
+                alt.Tooltip(field='n_clusters'),
+                alt.Tooltip(field='inertia', format=',.2f')
+            ]
+        )
+        .properties(
+            title='Inertia (TD2)',
+            height=290,
+            # width='container',
+            config={
+                'axis': {
+                    'grid': True
+                }
+            }
+        )
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, kmeans_results_df):
+    _chart = (
+        alt.Chart(kmeans_results_df)
+        .mark_line()
+        .encode(
+            x=alt.X(field='n_clusters', type='quantitative'),
+            y=alt.Y(field='silhouette_score', type='quantitative'),
+            tooltip=[
+                alt.Tooltip(field='n_clusters', format=',.0f'),
+                alt.Tooltip(field='silhouette_score', format=',.2f')
+            ]
+        )
+        .properties(
+            title='Silhouette Scores',
+            height=290,
+            width='container',
+            config={
+                'axis': {
+                    'grid': True
+                }
+            }
+        )
+    )
+    _chart
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Explore Clusters
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(KMeans, kmeans_column_select, kmeans_data, n_clusters_slider):
+    kmeans = KMeans(n_clusters=n_clusters_slider.value, random_state=42)
+    kmeans.fit(
+        kmeans_data[kmeans_column_select.value]
+    )
+    kmeans_data["kmeans_cluster"] = kmeans.labels_
+    return
+
+
+@app.cell(hide_code=True)
+def _(kmeans_data, mo):
+    kmeans_scatter_chart_x = mo.ui.dropdown(
+        options=kmeans_data.columns.tolist(),
+        label="Select KMeans X-Axis Columns:",
+        value='totalcharges')
+    kmeans_scatter_chart_y = mo.ui.dropdown(
+        options=kmeans_data.columns.tolist(),
+        label="Select KMeans Y-Axis Columns:",
+        value='tenure')
+    kmeans_scatter_chart_color_scheme = mo.ui.dropdown(
+        options=["accent", "dark2", "category10", "set1","set3", 'paired', 'tableau10'],
+        label="Select KMeans Color Scheme:",
+        value="accent")
+
+
+    mo.hstack([kmeans_scatter_chart_x, kmeans_scatter_chart_y, kmeans_scatter_chart_color_scheme], gap=2)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    _chart = (
+        alt.Chart(kmeans_data)
+        .mark_point()
+        .encode(
+            x=alt.X(field=kmeans_scatter_chart_x.value, type="quantitative",scale=alt.Scale(padding=1)),
+            y=alt.Y(field=kmeans_scatter_chart_y.value, type="quantitative",scale=alt.Scale(padding=1)),
+            color=alt.Color(
+                field="kmeans_cluster", type="quantitative", scale={"scheme": kmeans_scatter_chart_color_scheme.value}
+            ),
+            tooltip=[
+                alt.Tooltip(field=kmeans_scatter_chart_x.value),
+                alt.Tooltip(field=kmeans_scatter_chart_y.value),
+                alt.Tooltip(field="kmeans_cluster", format=",.0f"),
+                alt.Tooltip(field="churn", format=",.0f"),
+            ],
+        )
+        .properties(height=290, width="container", config={"axis": {"grid": True}}, title="KMeans Clustering Scatter Plot")
+    )
+    kmeans_scatter_chart = mo.ui.altair_chart(_chart)
+    kmeans_scatter_chart
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(kmeans_scatter_chart):
+    kmeans_scatter_chart.value
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell(column=6, hide_code=True)
+def _(mo):
+    mo.md(r"""
     # Logistic Regression Baseline
     """)
     return
@@ -735,7 +1077,7 @@ def _():
     return
 
 
-@app.cell(column=6, hide_code=True)
+@app.cell(column=7, hide_code=True)
 def _(mo):
     mo.md(r"""
     # SMOTE
@@ -797,7 +1139,7 @@ def _(
     return
 
 
-@app.cell(column=7)
+@app.cell(column=8)
 def _():
     return
 
