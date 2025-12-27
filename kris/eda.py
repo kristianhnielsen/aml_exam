@@ -95,6 +95,10 @@ def _(pd):
     data.drop(labels=data[data["totalcharges"] == " "].index, inplace=True)
     data["totalcharges"] = data["totalcharges"].astype(float)
     print("After:\t", data.shape)
+    # make seniorcitizen categorical
+    data["seniorcitizen"] = data["seniorcitizen"].apply(
+        lambda x: "Yes" if x == 1 else "No"
+    )
     data.head()
     return (data,)
 
@@ -404,7 +408,7 @@ def _(data):
     binary_cols = [
         col
         for col in data.select_dtypes(exclude="float64").columns
-        if data[col].nunique() == 2 and col != "seniorcitizen"
+        if data[col].nunique() == 2
     ]
     ternary_cols = [
         col
@@ -583,27 +587,27 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(data):
     segments_clusters = {
-        "senior single": (data["seniorcitizen"] == 1)
+        "senior single": (data["seniorcitizen"] == "Yes")
         & (data["partner"] == "No")
         & (data["dependents"] == "No"),
-        "senior couple": (data["seniorcitizen"] == 1)
+        "senior couple": (data["seniorcitizen"] == "Yes")
         & (data["partner"] == "Yes")
         & (data["dependents"] == "No"),
-        "senior single parent": (data["seniorcitizen"] == 1)
+        "senior single parent": (data["seniorcitizen"] == "Yes")
         & (data["partner"] == "No")
         & (data["dependents"] == "Yes"),
-        "senior with family": (data["seniorcitizen"] == 1)
+        "senior with family": (data["seniorcitizen"] == "Yes")
         & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
-        "non-senior single": (data["seniorcitizen"] == 0)
+        "non-senior single": (data["seniorcitizen"] == "No")
         & (data["partner"] == "No")
         & (data["dependents"] == "No"),
-        "non-senior couple": (data["seniorcitizen"] == 0)
+        "non-senior couple": (data["seniorcitizen"] == "No")
         & (data["partner"] == "Yes")
         & (data["dependents"] == "No"),
-        "non-senior single parent": (data["seniorcitizen"] == 0)
+        "non-senior single parent": (data["seniorcitizen"] == "No")
         & (data["partner"] == "No")
         & (data["dependents"] == "Yes"),
-        "non-senior with family": (data["seniorcitizen"] == 0)
+        "non-senior with family": (data["seniorcitizen"] == "No")
         & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
     }
     clustering_data = data.copy()
@@ -612,6 +616,9 @@ def _(data):
     # clustering_data["totalcharges_log"] = np.log1p(clustering_data["totalcharges"])
     # clustering_data["monthlycharges_log"] = np.log1p(
     #     clustering_data["monthlycharges"]
+    # )
+    # clustering_data["monthlycharges_avg"] = clustering_data["totalcharges"] / (
+    #     clustering_data["tenure"] + 0.00001
     # )
     # clustering_data["tenure_log"] = np.log1p(clustering_data["tenure"])
     clustering_data
@@ -714,9 +721,11 @@ def _(LabelEncoder, StandardScaler, clustering_data):
     _kmeans_le = LabelEncoder()
     kmeans_data = clustering_data.copy()
 
-    _num_cols = kmeans_data.select_dtypes(include=["float64", 'int64']).columns.to_list()
+    _num_cols = kmeans_data.select_dtypes(
+        include=["float64", "int64"]
+    ).columns.to_list()
     kmeans_data[_num_cols] = _kmeans_scaler.fit_transform(kmeans_data[_num_cols])
-    
+
     for _col in kmeans_data.select_dtypes(include=["object"]).columns.to_list():
         kmeans_data[_col] = _kmeans_le.fit_transform(kmeans_data[_col])
     kmeans_data
@@ -783,22 +792,18 @@ def _(alt, kmeans_results_df):
         alt.Chart(kmeans_results_df)
         .mark_line()
         .encode(
-            x=alt.X(field='n_clusters', type='quantitative'),
-            y=alt.Y(field='inertia', type='quantitative'),
+            x=alt.X(field="n_clusters", type="quantitative"),
+            y=alt.Y(field="inertia", type="quantitative"),
             tooltip=[
-                alt.Tooltip(field='n_clusters'),
-                alt.Tooltip(field='inertia', format=',.2f')
-            ]
+                alt.Tooltip(field="n_clusters"),
+                alt.Tooltip(field="inertia", format=",.2f"),
+            ],
         )
         .properties(
-            title='Inertia (TD2)',
+            title="Inertia (TD2)",
             height=290,
             # width='container',
-            config={
-                'axis': {
-                    'grid': True
-                }
-            }
+            config={"axis": {"grid": True}},
         )
     )
     _chart
@@ -811,29 +816,25 @@ def _(alt, kmeans_results_df):
         alt.Chart(kmeans_results_df)
         .mark_line()
         .encode(
-            x=alt.X(field='n_clusters', type='quantitative'),
-            y=alt.Y(field='silhouette_score', type='quantitative'),
+            x=alt.X(field="n_clusters", type="quantitative"),
+            y=alt.Y(field="silhouette_score", type="quantitative"),
             tooltip=[
-                alt.Tooltip(field='n_clusters', format=',.0f'),
-                alt.Tooltip(field='silhouette_score', format=',.2f')
-            ]
+                alt.Tooltip(field="n_clusters", format=",.0f"),
+                alt.Tooltip(field="silhouette_score", format=",.2f"),
+            ],
         )
         .properties(
-            title='Silhouette Scores',
+            title="Silhouette Scores",
             height=290,
-            width='container',
-            config={
-                'axis': {
-                    'grid': True
-                }
-            }
+            width="container",
+            config={"axis": {"grid": True}},
         )
     )
     _chart
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Explore Clusters
@@ -844,9 +845,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(KMeans, kmeans_column_select, kmeans_data, n_clusters_slider):
     kmeans = KMeans(n_clusters=n_clusters_slider.value, random_state=42)
-    kmeans.fit(
-        kmeans_data[kmeans_column_select.value]
-    )
+    kmeans.fit(kmeans_data[kmeans_column_select.value])
     kmeans_data["kmeans_cluster"] = kmeans.labels_
     return
 
@@ -856,32 +855,70 @@ def _(kmeans_data, mo):
     kmeans_scatter_chart_x = mo.ui.dropdown(
         options=kmeans_data.columns.tolist(),
         label="Select KMeans X-Axis Columns:",
-        value='totalcharges')
+        value="totalcharges",
+    )
     kmeans_scatter_chart_y = mo.ui.dropdown(
         options=kmeans_data.columns.tolist(),
         label="Select KMeans Y-Axis Columns:",
-        value='tenure')
+        value="tenure",
+    )
     kmeans_scatter_chart_color_scheme = mo.ui.dropdown(
-        options=["accent", "dark2", "category10", "set1","set3", 'paired', 'tableau10'],
+        options=[
+            "accent",
+            "dark2",
+            "category10",
+            "set1",
+            "set3",
+            "paired",
+            "tableau10",
+        ],
         label="Select KMeans Color Scheme:",
-        value="accent")
+        value="accent",
+    )
 
 
-    mo.hstack([kmeans_scatter_chart_x, kmeans_scatter_chart_y, kmeans_scatter_chart_color_scheme], gap=2)
-    return
+    mo.hstack(
+        [
+            kmeans_scatter_chart_x,
+            kmeans_scatter_chart_y,
+            kmeans_scatter_chart_color_scheme,
+        ],
+        gap=2,
+    )
+    return (
+        kmeans_scatter_chart_color_scheme,
+        kmeans_scatter_chart_x,
+        kmeans_scatter_chart_y,
+    )
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+def _(
+    alt,
+    kmeans_data,
+    kmeans_scatter_chart_color_scheme,
+    kmeans_scatter_chart_x,
+    kmeans_scatter_chart_y,
+    mo,
+):
     _chart = (
         alt.Chart(kmeans_data)
         .mark_point()
         .encode(
-            x=alt.X(field=kmeans_scatter_chart_x.value, type="quantitative",scale=alt.Scale(padding=1)),
-            y=alt.Y(field=kmeans_scatter_chart_y.value, type="quantitative",scale=alt.Scale(padding=1)),
+            x=alt.X(
+                field=kmeans_scatter_chart_x.value,
+                type="quantitative",
+                scale=alt.Scale(padding=1),
+            ),
+            y=alt.Y(
+                field=kmeans_scatter_chart_y.value,
+                type="quantitative",
+                scale=alt.Scale(padding=1),
+            ),
             color=alt.Color(
-                field="kmeans_cluster", type="quantitative", scale={"scheme": kmeans_scatter_chart_color_scheme.value}
+                field="kmeans_cluster",
+                type="quantitative",
+                scale={"scheme": kmeans_scatter_chart_color_scheme.value},
             ),
             tooltip=[
                 alt.Tooltip(field=kmeans_scatter_chart_x.value),
@@ -890,12 +927,16 @@ def _(mo):
                 alt.Tooltip(field="churn", format=",.0f"),
             ],
         )
-        .properties(height=290, width="container", config={"axis": {"grid": True}}, title="KMeans Clustering Scatter Plot")
+        .properties(
+            height=290,
+            width="container",
+            config={"axis": {"grid": True}},
+            title="KMeans Clustering Scatter Plot",
+        )
     )
     kmeans_scatter_chart = mo.ui.altair_chart(_chart)
     kmeans_scatter_chart
-    """)
-    return
+    return (kmeans_scatter_chart,)
 
 
 @app.cell(hide_code=True)
@@ -933,7 +974,7 @@ def _(OneHotEncoder, StandardScaler, data, numerical_cols, pd):
     _binary_cols = [
         col
         for col in data.select_dtypes(exclude="float64").columns
-        if data[col].nunique() == 2 and col != "seniorcitizen"
+        if data[col].nunique() == 2
     ]
     _ternary_cols = [
         col
@@ -972,7 +1013,6 @@ def _(OneHotEncoder, StandardScaler, data, numerical_cols, pd):
     ohe_encoded_data = pd.concat(
         [
             data[_numerical_cols],
-            data[["seniorcitizen"]],
             _encoded_categorical,
             _encoded_binary,
             _encoded_ternary,
@@ -1139,8 +1179,170 @@ def _(
     return
 
 
-@app.cell(column=8)
-def _():
+@app.cell(column=8, hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Survival Analysis
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(OneHotEncoder, StandardScaler, data, np, pd):
+    import lifelines
+    from lifelines import KaplanMeierFitter, CoxPHFitter
+
+
+    ts_data = data.copy()
+    _one_hot_encoder = OneHotEncoder(sparse_output=False)
+
+    _binary_cols = [
+        col
+        for col in ts_data.select_dtypes(include="object").columns
+        if ts_data[col].nunique() == 2
+    ]
+
+    _categorical_cols = [
+        col
+        for col in ts_data.select_dtypes(include="object").columns
+        if ts_data[col].nunique() > 2
+    ]
+    _numerical_cols = data.select_dtypes(
+        include=["float64", "int64"]
+    ).columns.tolist()
+
+
+    # Encode data of different types
+    _encoded_binary = ts_data[_binary_cols].apply(
+        lambda x: x.map({"Yes": 1, "No": 0})
+    )
+
+    _encoded_categorical = pd.DataFrame(
+        _one_hot_encoder.fit_transform(ts_data[_categorical_cols]),
+        columns=_one_hot_encoder.get_feature_names_out(_categorical_cols),
+        index=ts_data.index,
+    ).astype(np.int64)
+
+
+    # Combine all encoded data
+    ts_ohe_data = pd.concat(
+        [
+            ts_data[_numerical_cols],
+            _encoded_categorical,
+            _encoded_binary,
+        ],
+        axis=1,
+    )
+    ts_ohe_data[_numerical_cols] = StandardScaler().fit_transform(
+        ts_ohe_data[_numerical_cols]
+    )
+    ts_ohe_data
+    return CoxPHFitter, KaplanMeierFitter, ts_ohe_data
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Cox Model
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(CoxPHFitter, train_test_split, ts_ohe_data):
+    _train_data, _test_data = train_test_split(
+        ts_ohe_data, test_size=0.2, random_state=42, stratify=ts_ohe_data["churn"]
+    )
+
+    cox = CoxPHFitter(penalizer=0.01)
+    cox.fit(df=_train_data, duration_col="tenure", event_col="churn")
+
+    print(
+        f"Train C-index: {cox.score(_train_data, scoring_method='concordance_index'):.3f}"
+    )
+    print(
+        f"Test C-index:  {cox.score(_test_data, scoring_method='concordance_index'):.3f}"
+    )
+    return (cox,)
+
+
+@app.cell
+def _(cox):
+    cox_summary = cox.summary
+    cox_significant_summary = cox_summary[cox_summary["p"] < 0.05]
+    cox_significant_summary[["coef", "exp(coef)", "p"]]
+    return (cox_significant_summary,)
+
+
+@app.cell(hide_code=True)
+def _(alt, cox_significant_summary, pd):
+    _chart = (
+        alt.Chart(cox_significant_summary.reset_index())
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                field="exp(coef)",
+                type="quantitative",
+                title="Hazard Ration (Exp(Coef))",
+            ),
+            y=alt.Y(field="covariate", type="nominal", sort="-x", title=None),
+            tooltip=[
+                alt.Tooltip(field="exp(coef)", format=",.2f"),
+                alt.Tooltip(field="covariate"),
+            ],
+            color=alt.condition(
+                alt.datum["exp(coef)"] > 1,
+                alt.value("#d62728"),  # Red
+                alt.value("#1f77b4"),  # Blue
+            ),
+        )
+    )
+    _rule = (
+        alt.Chart(pd.DataFrame({"x": [1]}))
+        .mark_rule(color="black", strokeDash=[4, 4])
+        .encode(x="x")
+    )
+    _chart = (_chart + _rule).properties(
+        height=290,
+        width="container",
+        config={"axis": {"grid": False}},
+        title="Cox Proportional Hazards Model Significant Exp(Coef)",
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, cox_significant_summary):
+    _chart = (
+        alt.Chart(cox_significant_summary.reset_index())
+        .mark_bar()
+        .encode(
+            x=alt.X(field="coef", type="quantitative"),
+            y=alt.Y(field="covariate", type="nominal", sort="-x", title=None),
+            tooltip=[
+                alt.Tooltip(field="coef", format=",.2f"),
+                alt.Tooltip(field="covariate"),
+            ],
+        )
+        .properties(
+            height=290,
+            width="container",
+            config={"axis": {"grid": False}},
+            title="Cox Proportional Hazards Model Significant Coefficients",
+        )
+        .interactive()
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(KaplanMeierFitter, plt, ts_ohe_data):
+    kmf = KaplanMeierFitter()
+    kmf.fit(durations=ts_ohe_data["tenure"], event_observed=ts_ohe_data["churn"])
+    plt.title("Kaplan-Meier Survival Curve")
+    kmf.plot()
     return
 
 

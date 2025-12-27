@@ -8,6 +8,7 @@ dependencies = [
     "altair>=6.0.0",
     "imbalanced-learn>=0.14.1",
     "ipykernel>=7.1.0",
+    "lifelines>=0.30.0",
     "marimo>=0.18.4",
     "matplotlib>=3.10.8",
     "mlflow>=3.7.0",
