@@ -247,12 +247,6 @@ def _(mo):
     return
 
 
-@app.cell
-def _(data):
-    data[data["churn"] == "No"][["churn", "tenure"]]
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1201,6 +1195,7 @@ def _(mo):
 def _(OneHotEncoder, data, np, pd):
     import lifelines
     from lifelines import KaplanMeierFitter, CoxPHFitter
+    from lifelines.plotting import plot_interval_censored_lifetimes, plot_lifetimes
 
 
     ts_data = data.copy()
@@ -1247,7 +1242,13 @@ def _(OneHotEncoder, data, np, pd):
     #     ts_ohe_data[_numerical_cols]
     # )
     ts_ohe_data
-    return CoxPHFitter, KaplanMeierFitter, ts_ohe_data
+    return CoxPHFitter, KaplanMeierFitter, plot_lifetimes, ts_ohe_data
+
+
+@app.cell
+def _(plot_lifetimes, ts_ohe_data):
+    plot_lifetimes(durations=ts_ohe_data.head(10)['tenure'], event_observed=ts_ohe_data.head(10)['churn'])
+    return
 
 
 @app.cell(hide_code=True)
@@ -1273,6 +1274,7 @@ def _(CoxPHFitter, train_test_split, ts_ohe_data):
     print(
         f"Test C-index:  {cox.score(_test_data, scoring_method='concordance_index'):.3f}"
     )
+    print(f"AIC: {cox.AIC_partial_}")
     return (cox,)
 
 
@@ -1355,20 +1357,6 @@ def _(alt, cox_significant_summary):
         .interactive()
     )
     _chart
-    return
-
-
-@app.cell(hide_code=True)
-def _(KaplanMeierFitter, plt, ts_ohe_data):
-    kmf = KaplanMeierFitter()
-    kmf.fit(durations=ts_ohe_data["tenure"], event_observed=ts_ohe_data["churn"])
-    plt.figure(figsize=(15, 6))
-    kmf.plot_survival_function(at_risk_counts=True)
-    plt.title(
-        "Kaplan-Meier Survival Function (estimated not churned after tenure)"
-    )
-    plt.grid(True)
-    plt.show()
     return
 
 
@@ -1483,6 +1471,58 @@ def _(mo):
 
     From a real-world business perspective, this drop in accuracy might be worth the trade-off for a simplified and more interpretable model.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Kaplan-Meier Survival Functions
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(KaplanMeierFitter, pd, plt):
+    def plot_km(df: pd.DataFrame):    
+        _kmf = KaplanMeierFitter()
+        _kmf.fit(durations=df["tenure"], event_observed=df["churn"])
+        plt.figure(figsize=(15, 6))
+        _kmf.plot_survival_function(at_risk_counts=True)
+        plt.title(
+            "Kaplan-Meier Survival Function (estimated not churned after tenure)"
+        )
+        plt.grid(True)
+        plt.show()
+    return (plot_km,)
+
+
+@app.cell
+def _(plot_km, ts_ohe_data):
+    plot_km(ts_ohe_data)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Young Tech-Savvy Single
+
+    Notice the y-axis reaches 0.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(plot_km, ts_ohe_data):
+    _df = ts_ohe_data.query("seniorcitizen == 0 & partner == 0 & dependents == 0 & `contract_Month-to-month` == 1 & paperlessbilling == 1")
+    plot_km(_df)
+    _df
+    return
+
+
+@app.cell
+def _():
     return
 
 
