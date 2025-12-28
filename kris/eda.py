@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.18.4"
-app = marimo.App(width="columns")
+app = marimo.App(width="columns", app_title="AML Exam EDA")
 
 
 @app.cell(column=0, hide_code=True)
@@ -51,11 +51,12 @@ def _():
         roc_auc_score,
         accuracy_score,
         RocCurveDisplay,
-        silhouette_score,
+        silhouette_score,ConfusionMatrixDisplay
     )
 
     from sklearn.cluster import KMeans
     return (
+        ConfusionMatrixDisplay,
         KMeans,
         LabelEncoder,
         LogisticRegression,
@@ -65,11 +66,13 @@ def _():
         accuracy_score,
         alt,
         classification_report,
+        confusion_matrix,
         math,
         mo,
         np,
         pd,
         plt,
+        roc_auc_score,
         silhouette_score,
         sns,
         train_test_split,
@@ -1188,7 +1191,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(OneHotEncoder, StandardScaler, data, np, pd):
+def _(OneHotEncoder, data, np, pd):
     import lifelines
     from lifelines import KaplanMeierFitter, CoxPHFitter
 
@@ -1233,9 +1236,9 @@ def _(OneHotEncoder, StandardScaler, data, np, pd):
         ],
         axis=1,
     )
-    ts_ohe_data[_numerical_cols] = StandardScaler().fit_transform(
-        ts_ohe_data[_numerical_cols]
-    )
+    # ts_ohe_data[_numerical_cols] = StandardScaler().fit_transform(
+    #     ts_ohe_data[_numerical_cols]
+    # )
     ts_ohe_data
     return CoxPHFitter, KaplanMeierFitter, ts_ohe_data
 
@@ -1341,8 +1344,124 @@ def _(alt, cox_significant_summary):
 def _(KaplanMeierFitter, plt, ts_ohe_data):
     kmf = KaplanMeierFitter()
     kmf.fit(durations=ts_ohe_data["tenure"], event_observed=ts_ohe_data["churn"])
-    plt.title("Kaplan-Meier Survival Curve")
-    kmf.plot()
+    plt.figure(figsize=(15, 6))
+    kmf.plot_survival_function(at_risk_counts=True)
+    plt.title("Kaplan-Meier Survival Function (estimated not churned after tenure)")
+    plt.grid(True)
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Log Reg Baseline
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    ConfusionMatrixDisplay,
+    LogisticRegression,
+    accuracy_score,
+    confusion_matrix,
+    cox_significant_summary,
+    plt,
+    roc_auc_score,
+    train_test_split,
+    ts_ohe_data,
+):
+    _y = ts_ohe_data["churn"]
+    _significant_cols = cox_significant_summary.T.columns.tolist()
+    _X = ts_ohe_data.drop(columns=["churn"])
+    print(f"Number of columns: {len(_X.columns)}")
+
+
+    _X_train, _X_test, _y_train, _y_test = train_test_split(
+        _X, _y, test_size=0.2, random_state=42, stratify=_y
+    )
+
+    _model = LogisticRegression()
+    _model.fit(_X_train, _y_train)
+
+    _y_preds = _model.predict(_X_test)
+    _acc = accuracy_score(_y_preds, _y_test)
+    _auc = roc_auc_score(y_true=_y_test, y_score=_y_preds)
+
+
+    print(f"Accuracy: {_acc}")
+    print(f"AUC: {_auc}")
+    _conf_matrix = confusion_matrix(y_pred=_y_preds, y_true=_y_test, normalize='all')
+    ConfusionMatrixDisplay(_conf_matrix).plot()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Logistic Regression based on Survival Analysis results
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    ConfusionMatrixDisplay,
+    LogisticRegression,
+    accuracy_score,
+    confusion_matrix,
+    cox_significant_summary,
+    plt,
+    roc_auc_score,
+    train_test_split,
+    ts_ohe_data,
+):
+    _y = ts_ohe_data["churn"]
+    _significant_cols = cox_significant_summary.T.columns.tolist()
+    _X = ts_ohe_data[_significant_cols]
+    print(f"Number of columns: {len(_X.columns)}")
+
+    _X_train, _X_test, _y_train, _y_test = train_test_split(
+        _X, _y, test_size=0.2, random_state=42, stratify=_y
+    )
+
+    _model = LogisticRegression()
+    _model.fit(_X_train, _y_train)
+
+    _y_preds = _model.predict(_X_test)
+    _acc = accuracy_score(_y_preds, _y_test)
+    _auc = roc_auc_score(y_true=_y_test, y_score=_y_preds)
+
+
+    print(f"Accuracy: {_acc}")
+    print(f"AUC: {_auc}")
+    _conf_matrix = confusion_matrix(y_pred=_y_preds, y_true=_y_test, normalize='all')
+    ConfusionMatrixDisplay(_conf_matrix).plot()
+    plt.show()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Logistic Regression (with Survival Analysis columns) Conclusion
+
+    Only using the statistically significant columns from the survival analysis, has reduced accuracy by 0.02 and AUC by 0.03.
+
+    The ratio of True Positives and True Negatives are roughly the same.
+
+    Although a drop of 0.02 accuracy is _something_, the number of columns/features dropped from 39 to 8.
+    That is a significant drop in features, while retaining the majority of the accuracy.
+
+    From a real-world business perspective, this drop in accuracy might be worth the trade-off for a simplified and more interpretable model.
+    """)
+    return
+
+
+@app.cell(column=9)
+def _():
     return
 
 
