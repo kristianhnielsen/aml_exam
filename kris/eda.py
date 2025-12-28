@@ -51,7 +51,8 @@ def _():
         roc_auc_score,
         accuracy_score,
         RocCurveDisplay,
-        silhouette_score,ConfusionMatrixDisplay
+        silhouette_score,
+        ConfusionMatrixDisplay,
     )
 
     from sklearn.cluster import KMeans
@@ -243,6 +244,12 @@ def _(mo):
     mo.md(r"""
     Only a 26.6% of the observations are categorized as churn. Is this too imbalanced?
     """)
+    return
+
+
+@app.cell
+def _(data):
+    data[data["churn"] == "No"][["churn", "tenure"]]
     return
 
 
@@ -1269,10 +1276,21 @@ def _(CoxPHFitter, train_test_split, ts_ohe_data):
     return (cox,)
 
 
-@app.cell
-def _(cox):
+@app.cell(hide_code=True)
+def _(mo):
+    cox_p_val_slider = mo.ui.slider(
+        start=0.01, stop=0.3, step=0.01, value=0.05, show_value=True
+    )
+    mo.md(f"Select the p-value threshold: {cox_p_val_slider}")
+    return (cox_p_val_slider,)
+
+
+@app.cell(hide_code=True)
+def _(cox, cox_p_val_slider):
     cox_summary = cox.summary
-    cox_significant_summary = cox_summary[cox_summary["p"] < 0.05]
+    cox_significant_summary = cox_summary[
+        cox_summary["p"] < cox_p_val_slider.value
+    ]
     cox_significant_summary[["coef", "exp(coef)", "p"]]
     return (cox_significant_summary,)
 
@@ -1346,7 +1364,9 @@ def _(KaplanMeierFitter, plt, ts_ohe_data):
     kmf.fit(durations=ts_ohe_data["tenure"], event_observed=ts_ohe_data["churn"])
     plt.figure(figsize=(15, 6))
     kmf.plot_survival_function(at_risk_counts=True)
-    plt.title("Kaplan-Meier Survival Function (estimated not churned after tenure)")
+    plt.title(
+        "Kaplan-Meier Survival Function (estimated not churned after tenure)"
+    )
     plt.grid(True)
     plt.show()
     return
@@ -1392,7 +1412,9 @@ def _(
 
     print(f"Accuracy: {_acc}")
     print(f"AUC: {_auc}")
-    _conf_matrix = confusion_matrix(y_pred=_y_preds, y_true=_y_test, normalize='all')
+    _conf_matrix = confusion_matrix(
+        y_pred=_y_preds, y_true=_y_test, normalize="all"
+    )
     ConfusionMatrixDisplay(_conf_matrix).plot()
     plt.show()
     return
@@ -1437,16 +1459,20 @@ def _(
 
     print(f"Accuracy: {_acc}")
     print(f"AUC: {_auc}")
-    _conf_matrix = confusion_matrix(y_pred=_y_preds, y_true=_y_test, normalize='all')
+    _conf_matrix = confusion_matrix(
+        y_pred=_y_preds, y_true=_y_test, normalize="all"
+    )
     ConfusionMatrixDisplay(_conf_matrix).plot()
     plt.show()
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Logistic Regression (with Survival Analysis columns) Conclusion
+
+    _Assuming p-value == 0.05_
 
     Only using the statistically significant columns from the survival analysis, has reduced accuracy by 0.02 and AUC by 0.03.
 
