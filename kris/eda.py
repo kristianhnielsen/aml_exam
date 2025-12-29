@@ -462,7 +462,6 @@ def _(
     encoded_data = pd.concat(
         [
             data[numerical_cols],
-            data[["seniorcitizen"]],
             encoded_categorical,
             encoded_binary,
             encoded_ternary,
@@ -1195,7 +1194,11 @@ def _(mo):
 def _(OneHotEncoder, data, np, pd):
     import lifelines
     from lifelines import KaplanMeierFitter, CoxPHFitter
-    from lifelines.plotting import plot_interval_censored_lifetimes, plot_lifetimes
+    from lifelines.plotting import (
+        plot_interval_censored_lifetimes,
+        plot_lifetimes,
+        add_at_risk_counts,
+    )
 
 
     ts_data = data.copy()
@@ -1247,7 +1250,10 @@ def _(OneHotEncoder, data, np, pd):
 
 @app.cell
 def _(plot_lifetimes, ts_ohe_data):
-    plot_lifetimes(durations=ts_ohe_data.head(10)['tenure'], event_observed=ts_ohe_data.head(10)['churn'])
+    plot_lifetimes(
+        durations=ts_ohe_data.head(10)["tenure"],
+        event_observed=ts_ohe_data.head(10)["churn"],
+    )
     return
 
 
@@ -1484,22 +1490,32 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(KaplanMeierFitter, pd, plt):
-    def plot_km(df: pd.DataFrame):    
+    def plot_km(df: pd.DataFrame, title="Kaplan-Meier Survival Function"):
         _kmf = KaplanMeierFitter()
         _kmf.fit(durations=df["tenure"], event_observed=df["churn"])
         plt.figure(figsize=(15, 6))
         _kmf.plot_survival_function(at_risk_counts=True)
-        plt.title(
-            "Kaplan-Meier Survival Function (estimated not churned after tenure)"
-        )
+        plt.title(title)
         plt.grid(True)
         plt.show()
     return (plot_km,)
 
 
+@app.cell(hide_code=True)
+def _(KaplanMeierFitter, plt, ts_ohe_data):
+    _kmf = KaplanMeierFitter()
+    _kmf.fit(durations=ts_ohe_data["tenure"], event_observed=ts_ohe_data["churn"])
+    plt.figure(figsize=(15, 6))
+    _kmf.plot_survival_function(at_risk_counts=True)
+    plt.title("Kaplan-Meier Survival Function (All columns)")
+    plt.grid(True)
+    plt.show()
+    return
+
+
 @app.cell
-def _(plot_km, ts_ohe_data):
-    plot_km(ts_ohe_data)
+def _(clustering_data, ts_ohe_data):
+    ts_ohe_data["customer_segment"] = clustering_data["customer_segment"]
     return
 
 
@@ -1515,14 +1531,58 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(plot_km, ts_ohe_data):
-    _df = ts_ohe_data.query("seniorcitizen == 0 & partner == 0 & dependents == 0 & `contract_Month-to-month` == 1 & paperlessbilling == 1")
+    _df = ts_ohe_data.query(
+        "seniorcitizen == 0 & partner == 0 & dependents == 0 & `contract_Month-to-month` == 1 & paperlessbilling == 1"
+    )
     plot_km(_df)
-    _df
+    # _df
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Segment Survival Functions
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(KaplanMeierFitter, pd, plt, ts_ohe_data):
+    def plot_survival_function_on_columns(df: pd.DataFrame, columns: list[str]):
+        for _col in columns:
+            _unique_values = df[_col].unique()
+
+            # Create a new figure for THIS column
+            plt.figure(figsize=(15, 8))
+            _ax = plt.subplot(111)
+            _fitters = []
+
+            for _value in _unique_values:
+                _kmf = KaplanMeierFitter()
+                # Filter dynamically using the current column and value
+                _subset = df[df[_col] == _value]
+
+                _kmf.fit(
+                    durations=_subset["tenure"],
+                    event_observed=_subset["churn"],
+                    label=str(_value),
+                )
+
+                _kmf.plot_survival_function(ax=_ax, ci_show=True)
+                _fitters.append(_kmf)
+
+            # add_at_risk_counts(*_fitters, ax=_ax)
+
+            _ax.set_title(f"Kaplan-Meier Survival Function by {_col}")
+            _ax.grid(True)
+            plt.tight_layout()
+            plt.show()
+
+
+    plot_survival_function_on_columns(
+        df=ts_ohe_data, columns=['seniorcitizen', 'dependents', 'partner', 'paperlessbilling', 'phoneservice']
+    )
     return
 
 
