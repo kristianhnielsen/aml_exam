@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def load_data(
-    file_path: str = "../data/WA_Fn-UseC_-Telco-Customer-Churn.csv",
+    file_path: str = "./data/WA_Fn-UseC_-Telco-Customer-Churn.csv",
 ) -> pd.DataFrame:
     # Define the schema
     schema = {

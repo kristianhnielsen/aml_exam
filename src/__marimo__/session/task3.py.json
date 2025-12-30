@@ -1,0 +1,383 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.18.4"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "08c0c8eb25def081765ba5c64544e732",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "2025-12-30 09:43:13.547729: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.\nTo enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.\n/home/lasse/.cache/uv/archive-v0/fPqtiq2xOL4IeZWe594UV/lib/python3.13/site-packages/keras/src/export/tf2onnx_lib.py:8: FutureWarning: In the future `np.object` will be defined as the corresponding NumPy scalar.\n  if not hasattr(np, \"object\"):\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "deb4036e81d9bd1b00c71f6541ab5955",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"starting-training\">Starting training</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "fe1713f81aad158efe92ab04eb9e2a37",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "/home/lasse/Documents/aml_exam/src/data.py:34: ParserWarning: Both a converter and dtype were specified for column Churn - only the converter will be used.\n  data = pd.read_csv(\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "ebe3c84bd96cde94f76b764912983680",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "f6fcd2f4c62319c0434bb3c81bbcccc3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "d1496415eb402558564c20c69f7eefc4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"creating-ffnn\">Creating FFNN</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "f64f0b4f4cbcdefca50389ffd0d606e9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "f066eaf68637a6a864cf8438b686f878",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"creating-ae\">Creating AE</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "f22fea344f93f14db6653780235e317d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "0427a59a5f632631e06fd601ca3d8584",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "c90c10bef53d829a8d89fa8e6d8e0368",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "7007679639cdbd22c6f048c544d19ebb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"training-ffnn-with-ae\">Training FFNN with AE</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "9536a75beab628987d51339c6ffd204b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "601f4814fb072a84902e1dd902d29e0c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"trying-xgboost-with-encoded\">Trying XGBoost with Encoded</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "7200e46518061dee6318c56483ccc260",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "80cf5f8e1927e4926bc89931f0909e85",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"creating-visualizations\">Creating Visualizations</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "b44b1dfcf19c9fcd91053babe983040f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "99cab2ef4634b15a2ce6753b4a19bcb2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "584fdd26c4fde5df427ae7d8b9f5ba1b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "5cd4f5a90f698bc517b876e758e939b6",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "a8c8bcf1b8b574e2bdc4925f15b5cc59",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "234edff35b0ae1fc450997de4657f2b9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"trying-other-pretrained-models\">Trying other pretrained models</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "e903985d3c6d45262d2fdf8f76e5f1a0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "c287727dc416f64675bb088b5ea8de4c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"using-bert\">Using BERT</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "8524876b5867a75d2ccf4013c476abe4",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'torch' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "aa4dd4da6252bbdcf3d40a03fe768924",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "36f9e5dac51b23d1be2a64b9b33c070e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "cd8b837b5e156f85f4c4d2b640354c37",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"trying-tabnet\">Trying tabNet</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "AjVT",
+      "code_hash": "ec713d4e7c9da90f118823c278c2fcdf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "/home/lasse/.cache/uv/archive-v0/fPqtiq2xOL4IeZWe594UV/lib/python3.13/site-packages/pytorch_tabnet/abstract_model.py:82: UserWarning: Device used : cpu\n  warnings.warn(f\"Device used : {self.device}\")\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "epoch 0  | loss: 0.68036 | train_auc: 0.73398 | train_accuracy: 0.73547 | valid_auc: 0.73057 | valid_accuracy: 0.72921 |  0:00:00s\nepoch 1  | loss: 0.52222 | train_auc: 0.76495 | train_accuracy: 0.73884 | valid_auc: 0.75707 | valid_accuracy: 0.73845 |  0:00:01s\nepoch 2  | loss: 0.48564 | train_auc: 0.7939  | train_accuracy: 0.7728  | valid_auc: 0.79344 | valid_accuracy: 0.76972 |  0:00:02s\nepoch 3  | loss: 0.46479 | train_auc: 0.8095  | train_accuracy: 0.78276 | valid_auc: 0.81011 | valid_accuracy: 0.77754 |  0:00:02s\nepoch 4  | loss: 0.45217 | train_auc: 0.80987 | train_accuracy: 0.78116 | valid_auc: 0.81214 | valid_accuracy: 0.78607 |  0:00:03s\nepoch 5  | loss: 0.44659 | train_auc: 0.81204 | train_accuracy: 0.78293 | valid_auc: 0.81689 | valid_accuracy: 0.7946  |  0:00:04s\nepoch 6  | loss: 0.43963 | train_auc: 0.81445 | train_accuracy: 0.78187 | valid_auc: 0.81749 | valid_accuracy: 0.79176 |  0:00:04s\nepoch 7  | loss: 0.43209 | train_auc: 0.82291 | train_accuracy: 0.78684 | valid_auc: 0.82393 | valid_accuracy: 0.78607 |  0:00:05s\nepoch 8  | loss: 0.43116 | train_auc: 0.82985 | train_accuracy: 0.78844 | valid_auc: 0.82989 | valid_accuracy: 0.79744 |  0:00:05s\nepoch 9  | loss: 0.4272  | train_auc: 0.82749 | train_accuracy: 0.7888  | valid_auc: 0.82691 | valid_accuracy: 0.79673 |  0:00:06s\nepoch 10 | loss: 0.42537 | train_auc: 0.82594 | train_accuracy: 0.79164 | valid_auc: 0.82362 | valid_accuracy: 0.80028 |  0:00:07s\nepoch 11 | loss: 0.42154 | train_auc: 0.83343 | train_accuracy: 0.79111 | valid_auc: 0.82532 | valid_accuracy: 0.79744 |  0:00:07s\nepoch 12 | loss: 0.41965 | train_auc: 0.83661 | train_accuracy: 0.792   | valid_auc: 0.82408 | valid_accuracy: 0.79389 |  0:00:08s\nepoch 13 | loss: 0.4164  | train_auc: 0.83864 | train_accuracy: 0.79236 | valid_auc: 0.82517 | valid_accuracy: 0.79602 |  0:00:08s\nepoch 14 | loss: 0.41504 | train_auc: 0.8418  | train_accuracy: 0.79378 | valid_auc: 0.82934 | valid_accuracy: 0.80028 |  0:00:09s\nepoch 15 | loss: 0.4093  | train_auc: 0.84403 | train_accuracy: 0.7984  | valid_auc: 0.83141 | valid_accuracy: 0.79673 |  0:00:10s\nepoch 16 | loss: 0.40961 | train_auc: 0.84442 | train_accuracy: 0.7968  | valid_auc: 0.83129 | valid_accuracy: 0.79602 |  0:00:10s\nepoch 17 | loss: 0.40665 | train_auc: 0.84276 | train_accuracy: 0.7968  | valid_auc: 0.83063 | valid_accuracy: 0.79602 |  0:00:11s\nepoch 18 | loss: 0.40782 | train_auc: 0.84193 | train_accuracy: 0.79751 | valid_auc: 0.82752 | valid_accuracy: 0.79744 |  0:00:12s\nepoch 19 | loss: 0.40711 | train_auc: 0.84227 | train_accuracy: 0.79822 | valid_auc: 0.82618 | valid_accuracy: 0.79815 |  0:00:13s\nepoch 20 | loss: 0.40532 | train_auc: 0.84556 | train_accuracy: 0.8016  | valid_auc: 0.82838 | valid_accuracy: 0.79744 |  0:00:13s\nepoch 21 | loss: 0.40546 | train_auc: 0.85129 | train_accuracy: 0.8032  | valid_auc: 0.83666 | valid_accuracy: 0.79744 |  0:00:14s\nepoch 22 | loss: 0.40016 | train_auc: 0.85531 | train_accuracy: 0.80427 | valid_auc: 0.84199 | valid_accuracy: 0.79531 |  0:00:15s\nepoch 23 | loss: 0.39734 | train_auc: 0.85587 | train_accuracy: 0.79911 | valid_auc: 0.83838 | valid_accuracy: 0.80242 |  0:00:15s\nepoch 24 | loss: 0.39689 | train_auc: 0.85396 | train_accuracy: 0.80124 | valid_auc: 0.83255 | valid_accuracy: 0.79957 |  0:00:16s\nepoch 25 | loss: 0.3975  | train_auc: 0.85584 | train_accuracy: 0.80338 | valid_auc: 0.83378 | valid_accuracy: 0.80526 |  0:00:16s\nepoch 26 | loss: 0.3942  | train_auc: 0.85972 | train_accuracy: 0.80551 | valid_auc: 0.83725 | valid_accuracy: 0.7946  |  0:00:17s\nepoch 27 | loss: 0.39339 | train_auc: 0.86359 | train_accuracy: 0.80711 | valid_auc: 0.83856 | valid_accuracy: 0.79318 |  0:00:17s\nepoch 28 | loss: 0.39382 | train_auc: 0.86608 | train_accuracy: 0.81013 | valid_auc: 0.83957 | valid_accuracy: 0.79531 |  0:00:18s\nepoch 29 | loss: 0.39226 | train_auc: 0.86829 | train_accuracy: 0.81013 | valid_auc: 0.84111 | valid_accuracy: 0.78962 |  0:00:19s\nepoch 30 | loss: 0.39022 | train_auc: 0.86814 | train_accuracy: 0.81333 | valid_auc: 0.84196 | valid_accuracy: 0.79247 |  0:00:19s\nepoch 31 | loss: 0.38696 | train_auc: 0.86795 | train_accuracy: 0.81333 | valid_auc: 0.83711 | valid_accuracy: 0.79033 |  0:00:20s\nepoch 32 | loss: 0.38721 | train_auc: 0.87262 | train_accuracy: 0.8176  | valid_auc: 0.83694 | valid_accuracy: 0.78252 |  0:00:21s\nepoch 33 | loss: 0.38432 | train_auc: 0.8738  | train_accuracy: 0.80871 | valid_auc: 0.83585 | valid_accuracy: 0.78749 |  0:00:22s\nepoch 34 | loss: 0.38345 | train_auc: 0.87621 | train_accuracy: 0.82116 | valid_auc: 0.84021 | valid_accuracy: 0.79531 |  0:00:22s\nepoch 35 | loss: 0.38124 | train_auc: 0.87851 | train_accuracy: 0.8208  | valid_auc: 0.84026 | valid_accuracy: 0.79744 |  0:00:23s\nepoch 36 | loss: 0.38049 | train_auc: 0.87763 | train_accuracy: 0.81956 | valid_auc: 0.83656 | valid_accuracy: 0.79318 |  0:00:23s\nepoch 37 | loss: 0.3813  | train_auc: 0.87655 | train_accuracy: 0.82133 | valid_auc: 0.83556 | valid_accuracy: 0.79176 |  0:00:24s\nepoch 38 | loss: 0.37644 | train_auc: 0.88214 | train_accuracy: 0.82027 | valid_auc: 0.844   | valid_accuracy: 0.79176 |  0:00:25s\nepoch 39 | loss: 0.37956 | train_auc: 0.88485 | train_accuracy: 0.81956 | valid_auc: 0.8473  | valid_accuracy: 0.79815 |  0:00:26s\nepoch 40 | loss: 0.37745 | train_auc: 0.88502 | train_accuracy: 0.82151 | valid_auc: 0.84412 | valid_accuracy: 0.79886 |  0:00:26s\n\nEarly stopping occurred at epoch 40 with best_epoch = 25 and best_valid_accuracy = 0.80526\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "/home/lasse/.cache/uv/archive-v0/fPqtiq2xOL4IeZWe594UV/lib/python3.13/site-packages/pytorch_tabnet/callbacks.py:172: UserWarning: Best weights from best epoch are automatically used!\n  warnings.warn(wrn_msg)\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Failed to send notification. Status code: 202, Response: \n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "caZz",
+      "code_hash": "36b38dee9a2d4d8742cd73e171dd5828",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "\nEarly stopping occurred at epoch 75 with best_epoch = 55 and best_valid_accuracy = 0.76759\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "/home/lasse/.cache/uv/archive-v0/fPqtiq2xOL4IeZWe594UV/lib/python3.13/site-packages/pytorch_tabnet/callbacks.py:172: UserWarning: Best weights from best epoch are automatically used!\n  warnings.warn(wrn_msg)\n",
+          "mimetype": "text/plain"
+        },
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Failed to send notification. Status code: 202, Response: \nFeature importances from tuned TabNet: [1.79256889e-01 2.07734537e-03 6.27251592e-02 9.17124332e-03\n 2.51532174e-02 8.32382734e-03 6.32616707e-03 2.60529634e-04\n 6.36055690e-03 4.80249242e-03 3.35652414e-03 2.54479727e-05\n 3.16864027e-04 2.61950230e-02 7.10629884e-03 4.61819132e-03\n 7.24402683e-02 2.51353765e-02 2.14216781e-02 5.66520756e-02\n 5.57927146e-02 2.09234367e-03 1.65097133e-04 1.57597304e-02\n 8.53191975e-07 1.38194793e-02 2.54051183e-05 1.86444411e-03\n 2.25937996e-03 1.56146715e-02 1.36684006e-02 4.44338818e-03\n 3.16975473e-02 2.58874260e-02 1.43585816e-04 1.24040514e-03\n 6.01562338e-03 1.32292849e-01 2.53347533e-05 6.53597574e-02\n 3.06671581e-02 1.13623347e-02 7.07074738e-05 4.78955989e-02\n 1.15097766e-05 9.90782975e-05]\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "pHFh",
+      "code_hash": "4a4c00d210d1452ef91d7119c9c00e23",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"teams-notifications\">Teams Notifications</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "NCOB",
+      "code_hash": "cb1a3d114f46b5cf54765a8c5ed6db00",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "aqbW",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}
