@@ -38,21 +38,27 @@ def _():
         silhouette_score,
         ConfusionMatrixDisplay,
         f1_score,
+        recall_score,
     )
 
     from sklearn.cluster import KMeans
     return (
+        ConfusionMatrixDisplay,
         LogisticRegression,
         OneHotEncoder,
         PCA,
         StandardScaler,
         accuracy_score,
         alt,
+        confusion_matrix,
+        f1_score,
         math,
         mo,
         np,
         pd,
         plt,
+        recall_score,
+        roc_auc_score,
         sns,
         train_test_split,
     )
@@ -575,6 +581,18 @@ def _(feature_dist_data, feature_dist_select_col, mo, pd, plt, sns):
     return
 
 
+@app.cell(hide_code=True)
+def _(clean_data, plt, sns):
+    _pseudo_total = clean_data["tenure"] * clean_data["monthlycharges"]
+    _total_diff = clean_data["totalcharges"].astype(float) - _pseudo_total
+    sns.scatterplot(data=clean_data, x=_pseudo_total, y="totalcharges")
+    plt.xlabel("tenure × monthlycharges")
+    plt.ylabel("totalcharges")
+    plt.title("Linearity Check: tenure × monthlycharges vs totalcharges")
+    plt.show()
+    return
+
+
 @app.cell
 def _():
     return
@@ -589,6 +607,12 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
+def _(dataset_selector):
+    dataset_selector
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Baseline
@@ -596,8 +620,29 @@ def _(mo):
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(
+    LogisticRegression,
+    accuracy_score,
+    dataset_selector,
+    datasets,
+    f1_score,
+    train_test_split,
+):
+    _selected_dataset = datasets[dataset_selector.value]
+    _y = _selected_dataset["churn"]
+    _X = _selected_dataset.drop(columns=["churn"])
+
+    _X_train, _X_test, _y_train, _y_test = train_test_split(
+        _X, _y, test_size=0.2, stratify=_y, random_state=42
+    )
+
+    _base_log_reg = LogisticRegression(max_iter=100_000).fit(_X_train, _y_train)
+    _base_preds = _base_log_reg.predict(_X_test)
+    _base_accuracy = accuracy_score(_y_test, _base_preds)
+    _base_f1 = f1_score(_y_test, _base_preds)
+    print(f"Baseline Accuracy: {_base_accuracy}")
+    print(f"Baseline F1: {_base_f1}")
     return
 
 
@@ -619,16 +664,94 @@ def _():
     return ADASYN, Counter, SMOTE, SMOTEENN
 
 
-@app.cell
-def _(dataset_selector):
-    dataset_selector
-    return
-
-
-@app.cell
+@app.cell(hide_code=True)
 def _():
-    # datasets[dataset_selector.value]
+    # _selected_dataset = datasets[dataset_selector.value]
+    # _y = _selected_dataset["churn"]
+    # _X = _selected_dataset.drop(columns=["churn"])
+
+    # base_results = {}
+    # smote_results = {}
+    # smoteenn_results = {}
+    # adasyn_results = {}
+
+
+    # _iterations = 3
+    # for _i in range(_iterations):
+    #     _X_train, _X_test, _y_train, _y_test = train_test_split(
+    #         _X, _y, test_size=0.2, stratify=_y
+    #     )
+    #     # Baseline model
+    #     _base_log_reg = LogisticRegression(max_iter=100_000).fit(
+    #         _X_train, _y_train
+    #     )
+    #     base_preds = _base_log_reg.predict(_X_test)
+    #     base_accuracy = accuracy_score(_y_test, base_preds)
+    #     base_f1 = f1_score(_y_test, base_preds)
+    #     base_results.append(base_accuracy)
+
+    #     # Test SMOTE models
+    #     _smote_models = [SMOTEENN(), ADASYN(), SMOTE()]
+    #     for _smote_model in _smote_models:
+    #         _X_resampled_train, _y_resampled_train = _smote_model.fit_resample(
+    #             _X_train, _y_train
+    #         )
+
+    #         smote_log_reg = LogisticRegression(max_iter=100_000).fit(
+    #             _X_resampled_train, _y_resampled_train
+    #         )
+
+    #         smote_preds = smote_log_reg.predict(_X_test)
+    #         smote_accuracy = accuracy_score(_y_test, smote_preds)
+    #         smote_f1 = f1_score(_y_test, smote_preds)
+
+    #         if isinstance(_smote_model, SMOTEENN):
+    #             smoteenn_results[_i] = {"accuracy": smote_accuracy, "f1": smote_f1}
+    #         elif isinstance(_smote_model, SMOTE):
+    #             smote_results[_i] = {"accuracy": smote_accuracy, "f1": smote_f1}
+    #         elif isinstance(_smote_model, ADASYN):
+    #             adasyn_results[_i] = {"accuracy": smote_accuracy, "f1": smote_f1}
+
+
+    # # Print class distributions
+    # _X_train, _X_test, _y_train, _y_test = train_test_split(
+    #     _X, _y, test_size=0.2, stratify=_y
+    # )
+    # # Baseline model
+    # print("Baseline Model classes:", Counter(_y_train))
+    # # Test SMOTE models
+    # _smote_models = [SMOTEENN(), ADASYN(), SMOTE()]
+    # for _smote_model in _smote_models:
+    #     _X_resampled_train, _y_resampled_train = _smote_model.fit_resample(
+    #         _X_train, _y_train
+    #     )
+    #     print(
+    #         f"{_smote_model.__class__.__name__} classes:",
+    #         Counter(_y_resampled_train),
+    #     )
+
+
+    # print(f"\n\nResults of {_iterations} iterations:")
+    # print("Baseline Mean Accuracy: ", np.mean(base_results))
+    # print("SMOTEENN Mean Accuracy: ", np.mean(smoteenn_results))
+    # print("ADASYN Mean Accuracy: ", np.mean(adasyn_results))
+    # print("\nBaseline Max Accuracy: ", max(base_results))
+    # print("SMOTEENN Max Accuracy: ", max(smoteenn_results))
+    # print("ADASYN Max Accuracy: ", max(adasyn_results))
     return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    smote_iterations_slider = mo.ui.slider(
+        1,
+        20,
+        value=2,
+        show_value=True,
+        label="Number of iterations to run SMOTE: ",
+    )
+    smote_iterations_slider
+    return (smote_iterations_slider,)
 
 
 @app.cell(hide_code=True)
@@ -641,80 +764,104 @@ def _(
     accuracy_score,
     dataset_selector,
     datasets,
-    np,
+    f1_score,
+    recall_score,
+    smote_iterations_slider,
     train_test_split,
 ):
+    # Setup Data
     _selected_dataset = datasets[dataset_selector.value]
     _y = _selected_dataset["churn"]
     _X = _selected_dataset.drop(columns=["churn"])
 
-    base_results = []
-    smote_results = []
-    smoteenn_results = []
-    kmean_smote_results = []
-    adasyn_results = []
+    # Dictionary to store lists of scores
+    # Now tracking: Accuracy, F1, and Recall
+    smote_model_metrics = {
+        "Baseline": {"accuracy": [], "f1": [], "recall": []},
+        "SMOTE": {"accuracy": [], "f1": [], "recall": []},
+        "SMOTEENN": {"accuracy": [], "f1": [], "recall": []},
+        "ADASYN": {"accuracy": [], "f1": [], "recall": []},
+    }
 
+    _iterations = smote_iterations_slider.value
 
-    _iterations = 3
-    for _ in range(_iterations):
+    print(f"--- Starting {_iterations} Iterations ---")
+
+    for _i in range(_iterations):
+        # 1. Stratified Split
         _X_train, _X_test, _y_train, _y_test = train_test_split(
             _X, _y, test_size=0.2, stratify=_y
         )
-        # Baseline model
-        _base_log_reg = LogisticRegression(max_iter=100_000).fit(
-            _X_train, _y_train
-        )
-        base_preds = _base_log_reg.predict(_X_test)
-        base_accuracy = accuracy_score(_y_test, base_preds)
-        base_results.append(base_accuracy)
 
-        # Test SMOTE models
-        _smote_models = [SMOTEENN(), ADASYN(), SMOTE()]
-        for _smote_model in _smote_models:
-            _X_resampled_train, _y_resampled_train = _smote_model.fit_resample(
-                _X_train, _y_train
+        # 2. Define the pipeline of samplers to test
+        samplers = [
+            ("Baseline", None),
+            ("SMOTE", SMOTE(random_state=42)),
+            ("SMOTEENN", SMOTEENN(random_state=42)),
+            ("ADASYN", ADASYN(random_state=42)),
+        ]
+
+        for name, sampler in samplers:
+            # Resample logic
+            if sampler:
+                try:
+                    X_train_res, y_train_res = sampler.fit_resample(
+                        _X_train, _y_train
+                    )
+                except ValueError as e:
+                    print(f"Skipping {name} iteration {_i} due to error: {e}")
+                    continue
+            else:
+                X_train_res, y_train_res = _X_train, _y_train
+
+            # Print Class Distribution (first iteration only)
+            if _i == 0:
+                print(
+                    f"{name:<10} Training Class Distribution: {Counter(y_train_res)}"
+                )
+
+            # Train
+            clf = LogisticRegression(max_iter=100_000, random_state=42)
+            clf.fit(X_train_res, y_train_res)
+
+            # Predict
+            preds = clf.predict(_X_test)
+
+            # Store Metrics
+            smote_model_metrics[name]["accuracy"].append(
+                accuracy_score(_y_test, preds)
             )
-
-            smote_log_reg = LogisticRegression(max_iter=100_000).fit(
-                _X_resampled_train, _y_resampled_train
+            smote_model_metrics[name]["f1"].append(f1_score(_y_test, preds))
+            smote_model_metrics[name]["recall"].append(
+                recall_score(_y_test, preds)
             )
-
-            smote_preds = smote_log_reg.predict(_X_test)
-            smote_accuracy = accuracy_score(_y_test, smote_preds)
-
-            if isinstance(_smote_model, SMOTEENN):
-                smoteenn_results.append(smote_accuracy)
-            elif isinstance(_smote_model, SMOTE):
-                smote_results.append(smote_accuracy)
-            elif isinstance(_smote_model, ADASYN):
-                adasyn_results.append(smote_accuracy)
+    return (smote_model_metrics,)
 
 
-    # Print class distributions
-    _X_train, _X_test, _y_train, _y_test = train_test_split(
-        _X, _y, test_size=0.2, stratify=_y
-    )
-    # Baseline model
-    print("Baseline Model classes:", Counter(_y_train))
-    # Test SMOTE models
-    _smote_models = [SMOTEENN(), ADASYN(), SMOTE()]
-    for _smote_model in _smote_models:
-        _X_resampled_train, _y_resampled_train = _smote_model.fit_resample(
-            _X_train, _y_train
-        )
-        print(
-            f"{_smote_model.__class__.__name__} classes:",
-            Counter(_y_resampled_train),
-        )
+@app.cell(hide_code=True)
+def _(np, smote_model_metrics):
+    # --- Results Output ---
+    print(f"{'Model':<15} | {'Metric':<10} | {'Mean':<8} | {'Max':<8}")
+    print("-" * 45)
 
+    for _name, metrics in smote_model_metrics.items():
+        if not metrics["accuracy"]:
+            continue
 
-    print(f"\n\nResults of {_iterations} iterations:")
-    print("Baseline Mean Accuracy: ", np.mean(base_results))
-    print("SMOTEENN Mean Accuracy: ", np.mean(smoteenn_results))
-    print("ADASYN Mean Accuracy: ", np.mean(adasyn_results))
-    print("\nBaseline Max Accuracy: ", max(base_results))
-    print("SMOTEENN Max Accuracy: ", max(smoteenn_results))
-    print("ADASYN Max Accuracy: ", max(adasyn_results))
+        # Calculate stats
+        mean_acc = np.mean(metrics["accuracy"])
+        max_acc = np.max(metrics["accuracy"])
+
+        mean_f1 = np.mean(metrics["f1"])
+        max_f1 = np.max(metrics["f1"])
+
+        mean_rec = np.mean(metrics["recall"])
+        max_rec = np.max(metrics["recall"])
+
+        print(f"{_name:<15} | Accuracy   | {mean_acc:.4f}   | {max_acc:.4f}")
+        print(f"{_name:<15} | F1 Score   | {mean_f1:.4f}   | {max_f1:.4f}")
+        print(f"{_name:<15} | Recall     | {mean_rec:.4f}   | {max_rec:.4f}")
+        print("-" * 45)
     return
 
 
@@ -734,10 +881,10 @@ def _():
         plot_lifetimes,
         add_at_risk_counts,
     )
-    return (CoxPHFitter,)
+    return CoxPHFitter, KaplanMeierFitter
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(CoxPHFitter, dataset_selector, datasets, train_test_split):
     _selected_dataset = datasets[dataset_selector.value]
     _train_data, _test_data = train_test_split(
@@ -754,21 +901,170 @@ def _(CoxPHFitter, dataset_selector, datasets, train_test_split):
         f"Train C-index: {cph.score(_train_data, scoring_method='concordance_index'):.3f}"
     )
     print(
-        f"Test C-index:  {cph.score(_test_data, scoring_method='concordance_index'):.3f}"
+        f"Test  C-index: {cph.score(_test_data, scoring_method='concordance_index'):.3f}"
     )
     return (cph,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(cph):
     cph.print_summary()
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(cph):
     cox_significant_summary = cph.summary[cph.summary["p"] < 0.05]
     cox_significant_summary[["coef", "exp(coef)", "p"]]
+    return (cox_significant_summary,)
+
+
+@app.cell(hide_code=True)
+def _(alt, cox_significant_summary, pd):
+    _chart = (
+        alt.Chart(cox_significant_summary.reset_index())
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                field="exp(coef)",
+                type="quantitative",
+                title="Hazard Ration (Exp(Coef))",
+            ),
+            y=alt.Y(field="covariate", type="nominal", sort="-x", title=None),
+            tooltip=[
+                alt.Tooltip(field="exp(coef)", format=",.2f"),
+                alt.Tooltip(field="covariate"),
+            ],
+            color=alt.condition(
+                alt.datum["exp(coef)"] > 1,
+                alt.value("#d62728"),  # Red
+                alt.value("#1f77b4"),  # Blue
+            ),
+        )
+    )
+    _rule = (
+        alt.Chart(pd.DataFrame({"x": [1]}))
+        .mark_rule(color="black", strokeDash=[4, 4])
+        .encode(x="x")
+    )
+    _chart = (_chart + _rule).properties(
+        height=290,
+        width="container",
+        config={"axis": {"grid": False}},
+        title="Cox Proportional Hazards Model Significant Exp(Coef)",
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(alt, cox_significant_summary):
+    _chart = (
+        alt.Chart(cox_significant_summary.reset_index())
+        .mark_bar()
+        .encode(
+            x=alt.X(field="coef", type="quantitative"),
+            y=alt.Y(field="covariate", type="nominal", sort="-x", title=None),
+            tooltip=[
+                alt.Tooltip(field="coef", format=",.2f"),
+                alt.Tooltip(field="covariate"),
+            ],
+        )
+        .properties(
+            height=290,
+            width="container",
+            config={"axis": {"grid": False}},
+            title="Cox Proportional Hazards Model Significant Coefficients",
+        )
+        .interactive()
+    )
+    _chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Logistic Regression Comparison
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    ConfusionMatrixDisplay,
+    LogisticRegression,
+    accuracy_score,
+    confusion_matrix,
+    cox_significant_summary,
+    dataset_selector,
+    datasets,
+    plt,
+    roc_auc_score,
+    train_test_split,
+):
+    _selected_dataset = datasets[dataset_selector.value]
+    _significant_cols = cox_significant_summary.T.columns.tolist()
+    _y = _selected_dataset["churn"]
+    _X = _selected_dataset[_significant_cols]
+    print(f"Number of columns: {len(_X.columns)}")
+
+    _X_train, _X_test, _y_train, _y_test = train_test_split(
+        _X, _y, test_size=0.2, random_state=42, stratify=_y
+    )
+
+    _model = LogisticRegression()
+    _model.fit(_X_train, _y_train)
+
+    _y_preds = _model.predict(_X_test)
+    _acc = accuracy_score(_y_preds, _y_test)
+    _auc = roc_auc_score(y_true=_y_test, y_score=_y_preds)
+
+    print(f"Accuracy: {_acc}")
+    print(f"AUC: {_auc}")
+    _conf_matrix = confusion_matrix(
+        y_pred=_y_preds, y_true=_y_test, normalize="all"
+    )
+    ConfusionMatrixDisplay(_conf_matrix).plot()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    ConfusionMatrixDisplay,
+    LogisticRegression,
+    accuracy_score,
+    confusion_matrix,
+    dataset_selector,
+    datasets,
+    plt,
+    roc_auc_score,
+    train_test_split,
+):
+    _selected_dataset = datasets[dataset_selector.value]
+    _y = _selected_dataset["churn"]
+    _X = _selected_dataset.drop(columns=["churn"])
+    print(f"Number of columns: {len(_X.columns)}")
+
+    _X_train, _X_test, _y_train, _y_test = train_test_split(
+        _X, _y, test_size=0.2, random_state=42, stratify=_y
+    )
+
+    _model = LogisticRegression()
+    _model.fit(_X_train, _y_train)
+
+    _y_preds = _model.predict(_X_test)
+    _acc = accuracy_score(_y_preds, _y_test)
+    _auc = roc_auc_score(y_true=_y_test, y_score=_y_preds)
+
+    print(f"Accuracy: {_acc}")
+    print(f"AUC: {_auc}")
+    _conf_matrix = confusion_matrix(
+        y_pred=_y_preds, y_true=_y_test, normalize="all"
+    )
+    ConfusionMatrixDisplay(_conf_matrix).plot()
+    plt.show()
     return
 
 
@@ -777,7 +1073,105 @@ def _():
     return
 
 
-@app.cell(column=3)
+@app.cell(column=3, hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Survival Functions
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(dataset_selector):
+    dataset_selector
+    return
+
+
+@app.cell
+def _(KaplanMeierFitter, dataset_selector, datasets, plt):
+    _selected_dataset = datasets[dataset_selector.value]
+    _kmf = KaplanMeierFitter()
+    _kmf.fit(
+        durations=_selected_dataset["tenure"],
+        event_observed=_selected_dataset["churn"],
+    )
+    plt.figure(figsize=(15, 6))
+    _kmf.plot_survival_function(at_risk_counts=True)
+    plt.title("Kaplan-Meier Survival Function (All columns)")
+    plt.grid(True)
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(KaplanMeierFitter, dataset_selector, datasets, plt):
+    def plot_survival_function_on_columns(columns: list[str]):
+        df = datasets[dataset_selector.value]
+
+        for _col in columns:
+            _unique_values = df[_col].unique()
+
+            # Create a new figure for THIS column
+            plt.figure(figsize=(15, 8))
+            _ax = plt.subplot(111)
+            _fitters = []
+
+            for _value in _unique_values:
+                _kmf = KaplanMeierFitter()
+                # Filter dynamically using the current column and value
+                _subset = df[df[_col] == _value]
+
+                _kmf.fit(
+                    durations=_subset["tenure"],
+                    event_observed=_subset["churn"],
+                    label=str(_value),
+                )
+
+                _kmf.plot_survival_function(ax=_ax, ci_show=False)
+                _fitters.append(_kmf)
+
+            # add_at_risk_counts(*_fitters, ax=_ax)
+
+            _ax.set_title(f"Kaplan-Meier Survival Function by {_col}")
+            _ax.grid(True)
+            plt.tight_layout()
+            plt.show()
+    return (plot_survival_function_on_columns,)
+
+
+@app.cell
+def _(plot_survival_function_on_columns):
+    plot_survival_function_on_columns(
+        columns=[
+            "seniorcitizen",
+            "dependents",
+            "partner",
+            "paperlessbilling",
+            "phoneservice",
+        ]
+    )
+    return
+
+
+@app.cell
+def _(plot_survival_function_on_columns):
+    plot_survival_function_on_columns(['customer_segment'])
+    return
+
+
+@app.cell
+def _(dataset_selector, datasets):
+    datasets[dataset_selector.value].columns
+    return
+
+
+@app.cell
+def _(dataset_selector, datasets, plot_survival_function_on_columns):
+    plot_survival_function_on_columns(datasets[dataset_selector.value].columns.tolist()[2:])
+    return
+
+
+@app.cell
 def _():
     return
 
