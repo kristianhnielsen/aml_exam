@@ -73,17 +73,3 @@ Start the MLFlow UI server:
 ```bash
 uvx mlflow ui
 ```
-
-# Marimo
-
-Run the Marimo notebooks:
-
-```bash
-uv run marimo edit
-```
-
-Or open a specific notebook:
-
-```bash
-uv run marimo edit file.py
-```
