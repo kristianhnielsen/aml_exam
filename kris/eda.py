@@ -90,6 +90,13 @@ def _(mo):
 
 @app.cell
 def _(pd):
+    _data = pd.read_csv("./data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    _data[_data["TotalCharges"] == " "]
+    return
+
+
+@app.cell
+def _(pd):
     data = pd.read_csv("./data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
     data.columns = data.columns.str.lower()
     data.drop(columns=["customerid", "gender"], inplace=True)
@@ -323,6 +330,18 @@ def _(data, mo, pd, plt, select_col, sns):
     plt.tight_layout()
 
     mo.hstack([select_col, mo.vstack([customer_proportion, customer_count])])
+    return customer_count, customer_proportion
+
+
+@app.cell
+def _(customer_proportion):
+    customer_proportion
+    return
+
+
+@app.cell
+def _(customer_count):
+    customer_count
     return
 
 
@@ -590,40 +609,55 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(data):
     segments_clusters = {
-        "senior single": (data["seniorcitizen"] == "Yes")
-        & (data["partner"] == "No")
-        & (data["dependents"] == "No"),
-        "senior couple": (data["seniorcitizen"] == "Yes")
-        & (data["partner"] == "Yes")
-        & (data["dependents"] == "No"),
-        "senior single parent": (data["seniorcitizen"] == "Yes")
-        & (data["partner"] == "No")
-        & (data["dependents"] == "Yes"),
-        "senior with family": (data["seniorcitizen"] == "Yes")
-        & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
-        "non-senior single": (data["seniorcitizen"] == "No")
-        & (data["partner"] == "No")
-        & (data["dependents"] == "No"),
-        "non-senior couple": (data["seniorcitizen"] == "No")
-        & (data["partner"] == "Yes")
-        & (data["dependents"] == "No"),
-        "non-senior single parent": (data["seniorcitizen"] == "No")
-        & (data["partner"] == "No")
-        & (data["dependents"] == "Yes"),
-        "non-senior with family": (data["seniorcitizen"] == "No")
-        & ((data["partner"] == "Yes") | (data["dependents"] == "Yes")),
+        # --- SENIORS (Approx 16% of data) ---
+        "senior solitary": (
+            (data["seniorcitizen"] == "Yes") & 
+            (data["partner"] == "No") & 
+            (data["dependents"] == "No")
+        ),
+        "senior couple": (
+            (data["seniorcitizen"] == "Yes") & 
+            (data["partner"] == "Yes") & 
+            (data["dependents"] == "No")
+        ),
+        "senior single guardian": ( # Rare but distinct
+            (data["seniorcitizen"] == "Yes") & 
+            (data["partner"] == "No") & 
+            (data["dependents"] == "Yes")
+        ),
+        "senior nuclear family": ( # Partner + Dependents
+            (data["seniorcitizen"] == "Yes") & 
+            (data["partner"] == "Yes") & 
+            (data["dependents"] == "Yes")
+        ),
+
+        # --- NON-SENIORS (Approx 84% of data) ---
+        "non-senior solitary": (
+            (data["seniorcitizen"] == "No") & 
+            (data["partner"] == "No") & 
+            (data["dependents"] == "No")
+        ),
+        "non-senior couple": ( # High Value Segment (DINKs - Double Income No Kids)
+            (data["seniorcitizen"] == "No") & 
+            (data["partner"] == "Yes") & 
+            (data["dependents"] == "No")
+        ),
+        "non-senior single parent": ( # High Risk Segment? (Needs support/security)
+            (data["seniorcitizen"] == "No") & 
+            (data["partner"] == "No") & 
+            (data["dependents"] == "Yes")
+        ),
+        "non-senior nuclear family": ( # The traditional "Family"
+            (data["seniorcitizen"] == "No") & 
+            (data["partner"] == "Yes") & 
+            (data["dependents"] == "Yes")
+        ),
     }
+
+    # Apply the logic
     clustering_data = data.copy()
     for segment, condition in segments_clusters.items():
         clustering_data.loc[condition, "customer_segment"] = segment
-    # clustering_data["totalcharges_log"] = np.log1p(clustering_data["totalcharges"])
-    # clustering_data["monthlycharges_log"] = np.log1p(
-    #     clustering_data["monthlycharges"]
-    # )
-    # clustering_data["monthlycharges_avg"] = clustering_data["totalcharges"] / (
-    #     clustering_data["tenure"] + 0.00001
-    # )
-    # clustering_data["tenure_log"] = np.log1p(clustering_data["tenure"])
     clustering_data
     return (clustering_data,)
 
@@ -688,23 +722,29 @@ def _(alt, clustering_data):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(alt, clustering_data):
-    _chart = (
-        alt.Chart(clustering_data)
-        .mark_arc()
-        .encode(
-            color=alt.Color(field="customer_segment", type="nominal"),
-            theta=alt.Theta(field="churn", type="nominal"),
-            tooltip=[
-                alt.Tooltip(field="churn"),
-                alt.Tooltip(field="churn"),
-                alt.Tooltip(field="customer_segment"),
-            ],
-        )
-        .properties(
-            title="Proportion of churn based on segmentation",
-        )
+    base = alt.Chart(clustering_data).encode(
+        theta=alt.Theta(field="churn", aggregate="count", stack=True), 
+        color=alt.Color(field="customer_segment", type="nominal"),
+        # CRITICAL: This ensures both slices and text follow the same sequence
+        order=alt.Order("customer_segment") 
+    )
+
+    # 1. The Pie Layer
+    pie = base.mark_arc(outerRadius=120)
+
+    # 2. The Text Layer
+    text = base.mark_text(radius=130).encode(
+        text=alt.Text(field="churn", aggregate="count"),
+        order=alt.Order("customer_segment"), # Match the order of the base
+        color=alt.Color(field="customer_segment") # Optional: Match text color to slice
+    )
+
+    _chart = (pie + text).properties(
+        title="Proportion of segmentation"
+    ).configure_legend(
+        offset=-340  # Adjust this value to move the legend closer (negative moves it left)
     )
     _chart
     return
@@ -1547,7 +1587,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(KaplanMeierFitter, pd, plt, ts_ohe_data):
     def plot_survival_function_on_columns(df: pd.DataFrame, columns: list[str]):
         for _col in columns:
@@ -1569,7 +1609,7 @@ def _(KaplanMeierFitter, pd, plt, ts_ohe_data):
                     label=str(_value),
                 )
 
-                _kmf.plot_survival_function(ax=_ax, ci_show=True)
+                _kmf.plot_survival_function(ax=_ax, ci_show=False)
                 _fitters.append(_kmf)
 
             # add_at_risk_counts(*_fitters, ax=_ax)
@@ -1583,6 +1623,25 @@ def _(KaplanMeierFitter, pd, plt, ts_ohe_data):
     plot_survival_function_on_columns(
         df=ts_ohe_data, columns=['seniorcitizen', 'dependents', 'partner', 'paperlessbilling', 'phoneservice']
     )
+    return (plot_survival_function_on_columns,)
+
+
+@app.cell
+def _(plot_survival_function_on_columns, ts_ohe_data):
+    plot_survival_function_on_columns(
+        df=ts_ohe_data[ts_ohe_data['seniorcitizen']==0], columns=['customer_segment']
+    )
+    plot_survival_function_on_columns(
+        df=ts_ohe_data[ts_ohe_data['seniorcitizen']==1], columns=['customer_segment']
+    )
+    plot_survival_function_on_columns(
+        df=ts_ohe_data, columns=['customer_segment']
+    )
+    return
+
+
+@app.cell
+def _():
     return
 
 
