@@ -21,6 +21,9 @@ def _():
         roc_auc_score,
         accuracy_score,
         classification_report,
+        f1_score,
+        precision_score,
+        recall_score,
     )
     import marimo as mo
     import pandas as pd
@@ -38,10 +41,13 @@ def _():
         accuracy_score,
         alt,
         classification_report,
+        f1_score,
         mo,
         np,
         pd,
+        precision_score,
         preprocessor,
+        recall_score,
         roc_auc_score,
         tf,
         xgb,
@@ -157,8 +163,11 @@ def _(
     X_train,
     classification_report,
     create_ffnn,
+    f1_score,
     input_dim,
     mlflow,
+    precision_score,
+    recall_score,
     roc_auc_score,
     y_test,
     y_train,
@@ -195,7 +204,10 @@ def _(
         test_loss, test_accuracy = ffnn_model.evaluate(X_test, y_test)
         y_pred_ffnn = ffnn_model.predict(X_test)
         _roc_auc_score = roc_auc_score(y_test, y_pred_ffnn)
-        class_report = classification_report(
+        _f1 = f1_score(y_test, (y_pred_ffnn >= 0.5).astype(int))
+        _precision = precision_score(y_test, (y_pred_ffnn >= 0.5).astype(int))
+        _recall = recall_score(y_test, (y_pred_ffnn >= 0.5).astype(int))
+        _class_report = classification_report(
             y_test, (y_pred_ffnn >= 0.5).astype(int)
         )
         mlflow.log_metrics(
@@ -203,10 +215,29 @@ def _(
                 "test_loss": test_loss,
                 "test_accuracy": test_accuracy,
                 "roc_auc": _roc_auc_score,
+                "f1_score": _f1,
+                "precision": _precision,
+                "recall": _recall,
             }
         )
-        print("Classification Report:\n", class_report)
+        print("Classification Report:\n", _class_report)
         print(f"Test Loss: {test_loss}, Test Accuracy: {test_accuracy}")
+
+        # Dump model
+        ffnn_model.save("ffnn_model.keras")
+    return
+
+
+@app.cell
+def _(X_test, np):
+    from shap_app import run_shap
+
+    _X_test_np_shap = X_test.values if hasattr(X_test, "values") else X_test
+    np.save("X_test.npy", _X_test_np_shap)
+
+    run_shap(
+        model_path="ffnn_model.keras", data_path="X_test.npy", model_type="tensorflow"
+    )
     return
 
 
@@ -304,7 +335,10 @@ def _(
     X_train_encoded,
     classification_report,
     create_ffnn,
+    f1_score,
     mlflow,
+    precision_score,
+    recall_score,
     roc_auc_score,
     y_test,
     y_train,
@@ -343,6 +377,9 @@ def _(
         test_loss_enc, test_accuracy_enc = ffnn_encoded_model.evaluate(
             X_test_encoded, y_test
         )
+        _f1 = f1_score(y_test, (y_pred_ffnn_ae >= 0.5).astype(int))
+        _precision = precision_score(y_test, (y_pred_ffnn_ae >= 0.5).astype(int))
+        _recall = recall_score(y_test, (y_pred_ffnn_ae >= 0.5).astype(int))
         class_report_enc = classification_report(
             y_test, (y_pred_ffnn_ae >= 0.5).astype(int)
         )
@@ -351,6 +388,9 @@ def _(
                 "test_loss_encoded": test_loss_enc,
                 "test_accuracy_encoded": test_accuracy_enc,
                 "roc_auc": _roc_auc_score_enc,
+                "f1_score": _f1,
+                "precision": _precision,
+                "recall": _recall,
             }
         )
         print(
@@ -374,7 +414,10 @@ def _(
     X_train_encoded,
     accuracy_score,
     classification_report,
+    f1_score,
     mlflow,
+    precision_score,
+    recall_score,
     roc_auc_score,
     xgb,
     y_test,
@@ -397,8 +440,17 @@ def _(
         y_pred_xgb = (y_pred_proba >= 0.5).astype(int)
         test_accuracy_xgb = accuracy_score(y_test, y_pred_xgb)
         class_report_xgb = classification_report(y_test, y_pred_xgb)
+        _f1 = f1_score(y_test, y_pred_xgb)
+        _precision = precision_score(y_test, y_pred_xgb)
+        _recall = recall_score(y_test, y_pred_xgb)
         mlflow.log_metrics(
-            {"roc_auc": test_auc_xgb, "test_accuracy_xgb": test_accuracy_xgb}
+            {
+                "roc_auc": test_auc_xgb,
+                "test_accuracy_xgb": test_accuracy_xgb,
+                "f1_score": _f1,
+                "precision": _precision,
+                "recall": _recall,
+            }
         )
         print(f"Test AUC (XGBoost on Encoded): {test_auc_xgb}")
         print(f"Test Accuracy (XGBoost on Encoded): {test_accuracy_xgb}")
@@ -717,8 +769,12 @@ def _(
     X_test,
     X_train,
     accuracy_score,
+    classification_report,
+    f1_score,
     mlflow,
     notify_completion,
+    precision_score,
+    recall_score,
     y_test,
     y_train,
 ):
@@ -755,8 +811,22 @@ def _(
 
         _preds = _tabnet_model.predict(_X_test_np)
         _acc = accuracy_score(_y_test_np, _preds)
-        mlflow.log_metrics({"Accuracy": _acc})
-        notify_completion(f"TabNet Accuracy: {_acc:.4f}")
+        _f1 = f1_score(_y_test_np, _preds)
+        _precision = precision_score(_y_test_np, _preds)
+        _recall = recall_score(_y_test_np, _preds)
+        _class_report = classification_report(_y_test_np, _preds)
+        print("Classification Report:\n", _class_report)
+        mlflow.log_metrics(
+            {
+                "Accuracy": _acc,
+                "F1_Score": _f1,
+                "Precision": _precision,
+                "Recall": _recall,
+            }
+        )
+        notify_completion(
+            f"TabNet Accuracy: {_acc:.4f} F1: {_f1:.4f} Precision: {_precision:.4f} Recall: {_recall:.4f}"
+        )
     return TabNetClassifier, torch
 
 
@@ -767,8 +837,11 @@ def _(
     X_train,
     accuracy_score,
     classification_report,
+    f1_score,
     mlflow,
     notify_completion,
+    precision_score,
+    recall_score,
     roc_auc_score,
     torch,
     y_test,
@@ -817,12 +890,20 @@ def _(
         _probs = _tabnet_tuned.predict_proba(_X_test_np)[:, 1]
         _auc_score = roc_auc_score(_y_test_np, _probs)
         _accuracy = accuracy_score(_y_test_np, (_probs >= 0.5).astype(int))
+        _f1 = f1_score(_y_test_np, (_probs >= 0.5).astype(int))
+        _precision = precision_score(_y_test_np, (_probs >= 0.5).astype(int))
+        _recall = recall_score(_y_test_np, (_probs >= 0.5).astype(int))
         _class_report = classification_report(
             _y_test_np, (_probs >= 0.5).astype(int)
         )
-        mlflow.log_metrics({"final_auc": _auc_score, "Accuracy": _accuracy})
         mlflow.log_metrics(
-            {"best_val_auc": max(_tabnet_tuned.history["valid_auc"])}
+            {
+                "final_auc": _auc_score,
+                "Accuracy": _accuracy,
+                "F1_Score": _f1,
+                "Precision": _precision,
+                "Recall": _recall,
+            }
         )
         notify_completion(
             f"TabNet Tuned AUC: {_auc_score:.4f} and Accuracy: {_accuracy:.4f}"
