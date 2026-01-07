@@ -11,11 +11,13 @@ def compute_shap_values(
     task: str = "classification",
     background_size: int = DEFAULT_BACKGROUND_SIZE,
 ):
+# we're sampling a small subset of our dataset, which is set in the config (50 by default)
     if X.shape[0] > background_size:
         background = shap.sample(X, background_size, random_state=0)
     else:
         background = X
 
+# get_predict_fn in adapters.py
     predict_fn = get_predict_fn(model, model_type, task=task)
     explainer = shap.Explainer(predict_fn, background)
     shap_values = explainer(X)
