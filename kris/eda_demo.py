@@ -531,6 +531,8 @@ def _(clean_data, mo, ohe_data_segment_str, pd):
         [clean_data, ohe_data_segment_str["customer_segment"]],
         axis=1,
     )
+    feature_dist_data['additional_services'] = (feature_dist_data[['onlinesecurity', 'onlinebackup', 'deviceprotection',
+                                          'techsupport', 'streamingtv', 'streamingmovies']] == 'Yes').sum(axis=1)
     feature_dist_select_col = mo.ui.radio(
         options=[
             col
@@ -582,6 +584,41 @@ def _(feature_dist_data, feature_dist_select_col, mo, pd, plt, sns):
 
 
 @app.cell(hide_code=True)
+def _(feature_dist_data, feature_dist_select_col, pd, plt, sns):
+    _customer_count = sns.countplot(
+        x=feature_dist_select_col.value,
+        hue="churn",
+        data=feature_dist_data,
+    )
+    _customer_count.set_title(
+        f"Volume: Count of Customers by {feature_dist_select_col.value}"
+    )
+    _customer_count.set_ylabel("Number of Customers")
+    _customer_count.set_xlabel("")
+    plt.xticks(rotation=70)
+
+
+    _cross_tab = pd.crosstab(
+        feature_dist_data[feature_dist_select_col.value],
+        feature_dist_data["churn"],
+    )
+    _cross_tab_prop = _cross_tab.div(_cross_tab.sum(1), axis=0)
+
+    _customer_proportion = _cross_tab_prop.plot(kind="bar", stacked=True)
+    _customer_proportion.set_title(
+        f"Ratio: Churn Proportion by {feature_dist_select_col.value}"
+    )
+    _customer_proportion.set_ylabel("Proportion")
+    _customer_proportion.set_xlabel("")
+    plt.xticks(rotation=70)
+    _customer_proportion.legend(title="Churn", loc="upper right")
+
+    plt.tight_layout()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
 def _(clean_data, plt, sns):
     _pseudo_total = clean_data["tenure"] * clean_data["monthlycharges"]
     _total_diff = clean_data["totalcharges"].astype(float) - _pseudo_total
@@ -590,6 +627,16 @@ def _(clean_data, plt, sns):
     plt.ylabel("totalcharges")
     plt.title("Linearity Check: tenure × monthlycharges vs totalcharges")
     plt.show()
+    return
+
+
+@app.cell
+def _(clean_data, sns):
+    _df = clean_data.copy()
+    _df['additional_services'] = (_df[['onlinesecurity', 'onlinebackup', 'deviceprotection',
+                                          'techsupport', 'streamingtv', 'streamingmovies']] == 'Yes').sum(axis=1)
+
+    sns.countplot(x='additional_services', hue='churn', data=_df)
     return
 
 
@@ -1166,13 +1213,8 @@ def _(dataset_selector, datasets):
 
 
 @app.cell
-def _(dataset_selector, datasets, plot_survival_function_on_columns):
-    plot_survival_function_on_columns(datasets[dataset_selector.value].columns.tolist()[2:])
-    return
-
-
-@app.cell
 def _():
+    # plot_survival_function_on_columns(datasets[dataset_selector.value].columns.tolist()[2:])
     return
 
 
